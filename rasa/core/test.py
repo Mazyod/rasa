@@ -6,7 +6,6 @@ import warnings as pywarnings
 from collections import defaultdict, namedtuple
 from typing import Any, Dict, List, Optional, Text, Tuple, TYPE_CHECKING, cast
 
-from rasa import telemetry
 from rasa.core.constants import (
     CONFUSION_MATRIX_STORIES_FILE,
     REPORT_STORIES_FILE,
@@ -1135,8 +1134,6 @@ async def test(
             errors,
             disable_plotting,
         )
-
-    telemetry.track_core_model_test(len(generator.story_graph.story_steps), e2e, agent)
 
     _log_evaluation_table(
         evaluation_store.action_targets,

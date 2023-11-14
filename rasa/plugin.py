@@ -89,11 +89,6 @@ def configure_commandline(cmdline_arguments: argparse.Namespace) -> Optional[Tex
 
 
 @hookspec  # type: ignore[misc]
-def init_telemetry(endpoints_file: Optional[Text]) -> None:
-    """Hook specification for initialising plugin telemetry."""
-
-
-@hookspec  # type: ignore[misc]
 def mock_tracker_for_evaluation(
     example: "Message", model_metadata: Optional["ModelMetadata"]
 ) -> Optional["DialogueStateTracker"]:

@@ -31,7 +31,6 @@ from colorclass import Color
 import questionary
 from questionary import Choice, Form, Question
 
-from rasa import telemetry
 import rasa.shared.utils.cli
 import rasa.shared.utils.io
 import rasa.cli.utils
@@ -1692,8 +1691,6 @@ def run_interactive_learning(
         partial(run.load_agent_on_start, server_args.get("model"), endpoints, None),
         "before_server_start",
     )
-
-    telemetry.track_interactive_learning_start(skip_visualization, SAVE_IN_E2E)
 
     _serve_application(app, file_importer, skip_visualization, conversation_id, port)
 

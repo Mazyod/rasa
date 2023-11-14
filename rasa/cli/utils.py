@@ -18,7 +18,6 @@ from rasa.shared.constants import (
     DEFAULT_CONFIG_PATH,
 )
 from rasa.shared.utils.cli import print_error
-from rasa import telemetry
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -248,7 +247,6 @@ def validate_files(
 
     validator.warn_if_config_mandatory_keys_are_not_set()
 
-    telemetry.track_validate_files(all_good)
     if not all_good:
         rasa.shared.utils.cli.print_error_and_exit(
             "Project validation completed with errors."

@@ -23,7 +23,6 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from rasa import telemetry
 from rasa.core.agent import Agent
 from rasa.core.channels import UserMessage
 from rasa.core.processor import MessageProcessor
@@ -1466,8 +1465,6 @@ async def run_evaluation(
             disable_plotting,
             report_as_dict=report_as_dict,
         )
-
-    telemetry.track_nlu_model_test(test_data)
 
     return result
 

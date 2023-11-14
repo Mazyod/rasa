@@ -8,7 +8,6 @@ from rasa_sdk import __version__ as rasa_sdk_version
 from rasa.constants import MINIMUM_COMPATIBLE_VERSION
 from rasa.utils.log_utils import configure_structlog
 
-import rasa.telemetry
 import rasa.utils.io
 import rasa.utils.tensorflow.environment as tf_env
 from rasa import version
@@ -19,7 +18,6 @@ from rasa.cli import (
     run,
     scaffold,
     shell,
-    telemetry,
     test,
     train,
     visualize,
@@ -65,7 +63,6 @@ def create_argument_parser() -> argparse.ArgumentParser:
     shell.add_subparser(subparsers, parents=parent_parsers)
     train.add_subparser(subparsers, parents=parent_parsers)
     interactive.add_subparser(subparsers, parents=parent_parsers)
-    telemetry.add_subparser(subparsers, parents=parent_parsers)
     test.add_subparser(subparsers, parents=parent_parsers)
     visualize.add_subparser(subparsers, parents=parent_parsers)
     data.add_subparser(subparsers, parents=parent_parsers)
@@ -120,9 +117,6 @@ def main() -> None:
             )
             endpoints_file = result[0] if result else None
 
-            rasa.telemetry.initialize_telemetry()
-            rasa.telemetry.initialize_error_reporting()
-            plugin_manager().hook.init_telemetry(endpoints_file=endpoints_file)
             plugin_manager().hook.init_managers(endpoints_file=endpoints_file)
             plugin_manager().hook.init_anonymization_pipeline(
                 endpoints_file=endpoints_file

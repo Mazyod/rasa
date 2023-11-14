@@ -2,7 +2,6 @@ import logging
 import os
 from typing import Text
 
-from rasa import telemetry
 from rasa.shared.core.training_data import loading
 from rasa.shared.utils.cli import print_error
 from rasa.shared.core.domain import InvalidDomain, Domain
@@ -51,7 +50,6 @@ def visualize(
         nlu_training_data = None
 
     logger.info("Starting to visualize stories...")
-    telemetry.track_visualization()
 
     story_steps = loading.load_data_from_resource(stories_path, domain)
     rasa.shared.core.training_data.visualization.visualize_stories(

@@ -4,7 +4,6 @@ import logging
 import typing
 from typing import List, Text, Optional
 
-from rasa import telemetry
 from rasa.cli import SubParsersAction
 import rasa.core.utils
 import rasa.shared.utils.cli
@@ -200,7 +199,6 @@ async def _export_trackers(args: argparse.Namespace) -> None:
 
     try:
         published_events = await exporter.publish_events()
-        telemetry.track_tracker_export(published_events, tracker_store, event_broker)
         rasa.shared.utils.cli.print_success(
             f"Done! Successfully published {published_events} events 🎉"
         )

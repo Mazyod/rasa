@@ -16,7 +16,6 @@ from rasa.shared.core.events import SlotSet
 from rasa.shared.core.training_data.structures import StoryGraph
 from rasa.shared.data import TrainingType
 from rasa.shared.importers.importer import TrainingDataImporter
-from rasa import telemetry
 from rasa.shared.core.domain import Domain
 import rasa.utils.common
 import rasa.shared.utils.common
@@ -206,20 +205,19 @@ def train(
 
     _check_unresolved_slots(domain_object, stories)
 
-    with telemetry.track_model_training(file_importer, model_type="rasa"):
-        return _train_graph(
-            file_importer,
-            training_type=training_type,
-            output_path=output,
-            fixed_model_name=fixed_model_name,
-            model_to_finetune=model_to_finetune,
-            force_full_training=force_training,
-            persist_nlu_training_data=persist_nlu_training_data,
-            finetuning_epoch_fraction=finetuning_epoch_fraction,
-            dry_run=dry_run,
-            **(core_additional_arguments or {}),
-            **(nlu_additional_arguments or {}),
-        )
+    return _train_graph(
+        file_importer,
+        training_type=training_type,
+        output_path=output,
+        fixed_model_name=fixed_model_name,
+        model_to_finetune=model_to_finetune,
+        force_full_training=force_training,
+        persist_nlu_training_data=persist_nlu_training_data,
+        finetuning_epoch_fraction=finetuning_epoch_fraction,
+        dry_run=dry_run,
+        **(core_additional_arguments or {}),
+        **(nlu_additional_arguments or {}),
+    )
 
 
 def _train_graph(
@@ -282,19 +280,16 @@ def _train_graph(
         model_name = _determine_model_name(fixed_model_name, training_type)
         full_model_path = Path(output_path, model_name)
 
-        with telemetry.track_model_training(
-            file_importer, model_type=training_type.model_type
-        ):
-            trainer.train(
-                model_configuration,
-                file_importer,
-                full_model_path,
-                force_retraining=force_full_training,
-                is_finetuning=is_finetuning,
-            )
-            rasa.shared.utils.cli.print_success(
-                f"Your Rasa model is trained and saved at '{full_model_path}'."
-            )
+        trainer.train(
+            model_configuration,
+            file_importer,
+            full_model_path,
+            force_retraining=force_full_training,
+            is_finetuning=is_finetuning,
+        )
+        rasa.shared.utils.cli.print_success(
+            f"Your Rasa model is trained and saved at '{full_model_path}'."
+        )
 
         return TrainingResult(str(full_model_path), 0)
 

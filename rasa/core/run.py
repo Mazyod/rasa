@@ -12,7 +12,7 @@ import rasa.shared.utils.common
 import rasa.utils
 import rasa.utils.common
 import rasa.utils.io
-from rasa import server, telemetry
+from rasa import server
 from rasa.constants import ENV_SANIC_BACKLOG
 from rasa.core import agent, channels, constants
 from rasa.core.agent import Agent
@@ -222,10 +222,6 @@ def serve_application(
 
     number_of_workers = rasa.core.utils.number_of_sanic_workers(
         endpoints.lock_store if endpoints else None
-    )
-
-    telemetry.track_server_start(
-        input_channels, endpoints, model_path, number_of_workers, enable_api
     )
 
     rasa.utils.common.update_sanic_log_level(

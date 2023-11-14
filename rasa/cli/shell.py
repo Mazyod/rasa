@@ -4,7 +4,6 @@ import uuid
 
 from typing import List
 
-from rasa import telemetry
 from rasa.cli import SubParsersAction
 from rasa.cli.arguments import shell as arguments
 from rasa.engine.storage.local_model_storage import LocalModelStorage
@@ -96,7 +95,6 @@ def shell_nlu(args: argparse.Namespace) -> None:
         )
         return
 
-    telemetry.track_shell_started("nlu")
     rasa.nlu.run.run_cmdline(model)
 
 
@@ -130,12 +128,8 @@ def shell(args: argparse.Namespace) -> None:
     if metadata.training_type == TrainingType.NLU:
         import rasa.nlu.run
 
-        telemetry.track_shell_started("nlu")
-
         rasa.nlu.run.run_cmdline(model)
     else:
         import rasa.cli.run
-
-        telemetry.track_shell_started("rasa")
 
         rasa.cli.run.run(args)

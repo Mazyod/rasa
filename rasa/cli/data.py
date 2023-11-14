@@ -4,7 +4,6 @@ import pathlib
 from typing import List
 
 import rasa.shared.core.domain
-from rasa import telemetry
 from rasa.cli import SubParsersAction
 from rasa.cli.arguments import data as arguments
 from rasa.cli.arguments import default_arguments
@@ -187,8 +186,6 @@ def split_nlu_data(args: argparse.Namespace) -> None:
     train.persist(args.out, filename=f"training_data{extension}")
     test.persist(args.out, filename=f"test_data{extension}")
 
-    telemetry.track_data_split(args.training_fraction, "nlu")
-
 
 def split_stories_data(args: argparse.Namespace) -> None:
     """Load data from a file path and split stories into test and train examples.
@@ -247,7 +244,6 @@ def _convert_nlu_data(args: argparse.Namespace) -> None:
         rasa.nlu.convert.convert_training_data(
             args.data, args.out, args.format, args.language
         )
-        telemetry.track_data_convert(args.format, "nlu")
     else:
         rasa.shared.utils.cli.print_error_and_exit(
             "Could not recognize output format. Supported output formats: 'json' "
