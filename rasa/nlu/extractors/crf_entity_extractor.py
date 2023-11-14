@@ -16,7 +16,6 @@ from rasa.engine.recipes.default_recipe import DefaultV1Recipe
 from rasa.engine.storage.resource import Resource
 from rasa.engine.storage.storage import ModelStorage
 from rasa.nlu.test import determine_token_labels
-from rasa.nlu.tokenizers.spacy_tokenizer import POS_TAG_KEY
 from rasa.nlu.extractors.extractor import EntityExtractorMixin
 from rasa.nlu.tokenizers.tokenizer import Token, Tokenizer
 from rasa.shared.nlu.training_data.training_data import TrainingData
@@ -34,6 +33,8 @@ from rasa.shared.nlu.constants import (
 )
 from rasa.shared.constants import DOCS_URL_COMPONENTS
 from rasa.utils.tensorflow.constants import BILOU_FLAG, FEATURIZERS
+
+POS_TAG_KEY = "pos"
 
 logger = logging.getLogger(__name__)
 

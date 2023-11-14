@@ -130,8 +130,7 @@ class DefaultV1Recipe(Recipe):
             component_types: Describes the types of a component which are then used
                 to place the component in the graph.
             is_trainable: `True` if the component requires training.
-            model_from: Can be used if this component requires a pre-loaded model
-                such as `SpacyNLP` or `MitieNLP`.
+            model_from: Can be used if this component requires a pre-loaded model.
 
         Returns:
             The registered class.

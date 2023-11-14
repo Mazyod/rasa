@@ -1,4 +1,4 @@
-.PHONY: clean test lint init docs format formatter build-docker build-docker-full build-docker-mitie-en build-docker-spacy-en build-docker-spacy-de
+.PHONY: clean test lint init docs format formatter build-docker build-docker-full build-docker-mitie-en
 
 JOBS ?= 1
 INTEGRATION_TEST_FOLDER = tests/integration_tests/
@@ -12,7 +12,7 @@ help:
 	@echo "    install"
 	@echo "        Install rasa."
 	@echo "    install-full"
-	@echo "        Install rasa with all extras (transformers, tensorflow_text, spacy, jieba)."
+	@echo "        Install rasa with all extras (transformers, tensorflow_text)."
 	@echo "    formatter"
 	@echo "        Apply black formatting to code."
 	@echo "    lint"
@@ -29,8 +29,6 @@ help:
 	@echo "        Install system requirements for running tests on macOS."
 	@echo "    prepare-tests-windows"
 	@echo "        Install system requirements for running tests on Windows."
-	@echo "    prepare-spacy"
-	@echo "        Download models needed for spacy tests."
 	@echo "    prepare-mitie"
 	@echo "        Download the standard english mitie model."
 	@echo "    prepare-transformers"
@@ -103,10 +101,6 @@ types:
 
 static-checks: lint lint-security types
 
-prepare-spacy:
-	poetry run python -m spacy download en_core_web_md
-	poetry run python -m spacy download de_core_news_sm
-
 prepare-mitie:
 	wget --progress=dot:giga -N -P data/ https://github.com/mit-nlp/MITIE/releases/download/v0.4/MITIE-models-v0.2.tar.bz2
 ifeq ($(OS),Windows_NT)
@@ -166,19 +160,19 @@ test-policies: test-marker
 
 test-nlu-featurizers: PYTEST_MARKER=category_nlu_featurizers and (not flaky) and (not acceptance)
 test-nlu-featurizers: DD_ARGS := $(or $(DD_ARGS),)
-test-nlu-featurizers: prepare-spacy prepare-mitie prepare-transformers test-marker
+test-nlu-featurizers: prepare-mitie prepare-transformers test-marker
 
 test-nlu-predictors: PYTEST_MARKER=category_nlu_predictors and (not flaky) and (not acceptance)
 test-nlu-predictors: DD_ARGS := $(or $(DD_ARGS),)
-test-nlu-predictors: prepare-spacy prepare-mitie test-marker
+test-nlu-predictors: prepare-mitie test-marker
 
 test-full-model-training: PYTEST_MARKER=category_full_model_training and (not flaky) and (not acceptance)
 test-full-model-training: DD_ARGS := $(or $(DD_ARGS),)
-test-full-model-training: prepare-spacy prepare-mitie prepare-transformers test-marker
+test-full-model-training: prepare-mitie prepare-transformers test-marker
 
 test-other-unit-tests: PYTEST_MARKER=category_other_unit_tests and (not flaky) and (not acceptance)
 test-other-unit-tests: DD_ARGS := $(or $(DD_ARGS),)
-test-other-unit-tests: prepare-spacy prepare-mitie test-marker
+test-other-unit-tests: prepare-mitie test-marker
 
 test-performance: PYTEST_MARKER=category_performance and (not flaky) and (not acceptance)
 test-performance: DD_ARGS := $(or $(DD_ARGS),)
@@ -186,11 +180,11 @@ test-performance: test-marker
 
 test-flaky: PYTEST_MARKER=flaky and (not acceptance)
 test-flaky: DD_ARGS := $(or $(DD_ARGS),)
-test-flaky: prepare-spacy prepare-mitie test-marker
+test-flaky: prepare-mitie test-marker
 
 test-acceptance: PYTEST_MARKER=acceptance and (not flaky)
 test-acceptance: DD_ARGS := $(or $(DD_ARGS),)
-test-acceptance: prepare-spacy prepare-mitie test-marker
+test-acceptance: prepare-mitie test-marker
 
 test-gh-actions:
 	OMP_NUM_THREADS=1 TF_CPP_MIN_LOG_LEVEL=2 poetry run pytest .github/tests --cov .github/scripts
@@ -256,30 +250,6 @@ build-docker-mitie-en:
 	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-images && \
 	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-builder && \
 	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl mitie-en
-
-build-docker-spacy-en:
-	export IMAGE_NAME=rasa && \
-	docker buildx use default && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-poetry && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-builder && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl spacy-en
-
-build-docker-spacy-de:
-	export IMAGE_NAME=rasa && \
-	docker buildx use default && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-poetry && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-builder && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl spacy-de
-
-build-docker-spacy-it:
-	export IMAGE_NAME=rasa && \
-	docker buildx use default && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-poetry && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl base-builder && \
-	docker buildx bake --set default.platform=${PLATFORM} -f docker/docker-bake.hcl spacy-it
 
 build-tests-deployment-env: ## Create environment files (.env) for docker-compose.
 	cd tests_deployment && \

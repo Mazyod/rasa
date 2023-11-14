@@ -11,7 +11,6 @@ from rasa.nlu.constants import (
     MESSAGE_ATTRIBUTES,
     TOKENS_NAMES,
 )
-from rasa.nlu.tokenizers.spacy_tokenizer import POS_TAG_KEY
 from rasa.nlu.featurizers.sparse_featurizer.lexical_syntactic_featurizer import (
     LexicalSyntacticFeaturizer,
     FEATURES,
@@ -21,6 +20,8 @@ from rasa.shared.nlu.training_data.message import Message
 from rasa.shared.nlu.constants import FEATURE_TYPE_SEQUENCE, TEXT
 from rasa.shared.exceptions import InvalidConfigException
 from rasa.nlu.tokenizers.tokenizer import Token
+
+POS_TAG_KEY = "pos"
 
 
 @pytest.fixture

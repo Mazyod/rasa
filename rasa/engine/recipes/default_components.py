@@ -10,27 +10,19 @@ from rasa.nlu.extractors.crf_entity_extractor import CRFEntityExtractor
 from rasa.nlu.extractors.duckling_entity_extractor import DucklingEntityExtractor
 from rasa.nlu.extractors.entity_synonyms import EntitySynonymMapper
 from rasa.nlu.extractors.mitie_entity_extractor import MitieEntityExtractor
-from rasa.nlu.extractors.spacy_entity_extractor import SpacyEntityExtractor
 from rasa.nlu.extractors.regex_entity_extractor import RegexEntityExtractor
 from rasa.nlu.featurizers.sparse_featurizer.lexical_syntactic_featurizer import (
     LexicalSyntacticFeaturizer,
 )
 from rasa.nlu.featurizers.dense_featurizer.convert_featurizer import ConveRTFeaturizer
 from rasa.nlu.featurizers.dense_featurizer.mitie_featurizer import MitieFeaturizer
-from rasa.nlu.featurizers.dense_featurizer.spacy_featurizer import SpacyFeaturizer
 from rasa.nlu.featurizers.sparse_featurizer.count_vectors_featurizer import (
     CountVectorsFeaturizer,
 )
 from rasa.nlu.featurizers.dense_featurizer.lm_featurizer import LanguageModelFeaturizer
 from rasa.nlu.featurizers.sparse_featurizer.regex_featurizer import RegexFeaturizer
 from rasa.nlu.selectors.response_selector import ResponseSelector
-from rasa.nlu.tokenizers.jieba_tokenizer import JiebaTokenizer
-from rasa.nlu.tokenizers.mitie_tokenizer import MitieTokenizer
-from rasa.nlu.tokenizers.spacy_tokenizer import SpacyTokenizer
 from rasa.nlu.tokenizers.whitespace_tokenizer import WhitespaceTokenizer
-from rasa.nlu.utils.mitie_utils import MitieNLP
-from rasa.nlu.utils.spacy_utils import SpacyNLP
-
 
 from rasa.core.policies.ted_policy import TEDPolicy
 from rasa.core.policies.memoization import MemoizationPolicy, AugmentedMemoizationPolicy
@@ -42,7 +34,6 @@ DEFAULT_COMPONENTS = [
     DIETClassifier,
     FallbackClassifier,
     KeywordIntentClassifier,
-    MitieIntentClassifier,
     SklearnIntentClassifier,
     LogisticRegressionClassifier,
     # Response Selectors
@@ -51,29 +42,13 @@ DEFAULT_COMPONENTS = [
     CRFEntityExtractor,
     DucklingEntityExtractor,
     EntitySynonymMapper,
-    MitieEntityExtractor,
-    SpacyEntityExtractor,
     RegexEntityExtractor,
     # Message Feauturizers
     LexicalSyntacticFeaturizer,
     ConveRTFeaturizer,
-    MitieFeaturizer,
-    SpacyFeaturizer,
     CountVectorsFeaturizer,
     LanguageModelFeaturizer,
     RegexFeaturizer,
     # Tokenizers
-    JiebaTokenizer,
-    MitieTokenizer,
-    SpacyTokenizer,
     WhitespaceTokenizer,
-    # Language Model Providers
-    MitieNLP,
-    SpacyNLP,
-    # Dialogue Management Policies
-    TEDPolicy,
-    UnexpecTEDIntentPolicy,
-    RulePolicy,
-    MemoizationPolicy,
-    AugmentedMemoizationPolicy,
 ]

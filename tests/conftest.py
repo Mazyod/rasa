@@ -12,7 +12,6 @@ import sys
 import uuid
 
 from pytest import TempdirFactory, MonkeyPatch, Function, TempPathFactory
-from spacy import Language
 from pytest import WarningsRecorder
 
 from rasa.engine.caching import LocalTrainingCache
@@ -610,28 +609,6 @@ def project() -> Text:
     create_initial_project(directory)
 
     return directory
-
-
-@pytest.fixture(scope="session")
-def spacy_nlp_component() -> SpacyNLP:
-    return SpacyNLP.create({"model": "en_core_web_md"}, Mock(), Mock(), Mock())
-
-
-@pytest.fixture(scope="session")
-def spacy_case_sensitive_nlp_component() -> SpacyNLP:
-    return SpacyNLP.create(
-        {"model": "en_core_web_md", "case_sensitive": True}, Mock(), Mock(), Mock()
-    )
-
-
-@pytest.fixture(scope="session")
-def spacy_model(spacy_nlp_component: SpacyNLP) -> SpacyModel:
-    return spacy_nlp_component.provide()
-
-
-@pytest.fixture(scope="session")
-def spacy_nlp(spacy_model: SpacyModel) -> Language:
-    return spacy_model.model
 
 
 @pytest.fixture(scope="session")

@@ -21,7 +21,6 @@ from rasa.engine.graph import ExecutionContext, GraphComponent
 from rasa.engine.recipes.default_recipe import DefaultV1Recipe
 from rasa.engine.storage.resource import Resource
 from rasa.engine.storage.storage import ModelStorage
-from rasa.nlu.tokenizers.spacy_tokenizer import POS_TAG_KEY, SpacyTokenizer
 from rasa.nlu.tokenizers.tokenizer import Token, Tokenizer
 from rasa.nlu.featurizers.sparse_featurizer.sparse_featurizer import SparseFeaturizer
 from rasa.nlu.constants import TOKENS_NAMES
@@ -35,6 +34,8 @@ import rasa.utils.io
 
 logger = logging.getLogger(__name__)
 
+
+POS_TAG_KEY = "pos"
 
 END_OF_SENTENCE = "EOS"
 BEGIN_OF_SENTENCE = "BOS"
@@ -273,7 +274,7 @@ class LexicalSyntacticFeaturizer(SparseFeaturizer, GraphComponent):
                 f"Expected training data to include tokens with part-of-speech tags"
                 f"because the given configuration includes part-of-speech features "
                 f"`pos` and/or `pos2`. "
-                f"Please add a {SpacyTokenizer.__name__} to your "
+                f"Please add a SpacyTokenizer to your "
                 f"configuration if you want to use the part-of-speech-features in the"
                 f"{self.__class__.__name__}. "
                 f"Continuing without the part-of-speech-features."
