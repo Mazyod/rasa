@@ -1,5 +1,0 @@
-stories:
-- story: story with slot
-  steps:
-  - slot_was_set:
-    - name

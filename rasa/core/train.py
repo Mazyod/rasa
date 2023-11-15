@@ -92,16 +92,3 @@ def do_compare_training(
     rasa.shared.utils.io.dump_obj_as_json_to_file(
         training_stories_per_model_file, story_range
     )
-
-
-def do_interactive_learning(
-    args: argparse.Namespace, file_importer: TrainingDataImporter
-) -> None:
-    from rasa.core.training import interactive
-
-    interactive.run_interactive_learning(
-        file_importer=file_importer,
-        skip_visualization=args.skip_visualization,
-        conversation_id=args.conversation_id,
-        server_args=args.__dict__,
-    )

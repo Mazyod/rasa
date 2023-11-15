@@ -1,6 +1,0 @@
-language: "en"
-assistant_id: placeholder_default
-policies:
-  - name: TEDPolicy
-    epochs: 2
-    checkpoint_model: False

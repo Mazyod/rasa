@@ -1,6 +1,0 @@
-stories:
-- story: test story with wrong intent and correct entity
-  steps:
-  - user: |
-      i am looking for [greek](cuisine) food and to seat [outside](seating)
-    intent: greet

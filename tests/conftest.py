@@ -18,12 +18,10 @@ from rasa.engine.caching import LocalTrainingCache
 from rasa.engine.graph import ExecutionContext, GraphSchema
 from rasa.engine.storage.local_model_storage import LocalModelStorage
 from rasa.engine.storage.storage import ModelStorage
-from sanic.request import Request
 
 from typing import Generator, Iterator, Callable
 
 from pathlib import Path
-from sanic import Sanic
 from typing import Text, List, Optional, Dict, Any
 from unittest.mock import Mock
 
@@ -212,7 +210,7 @@ def endpoints_path() -> Text:
 # update: implement fix to RuntimeError Event loop is closed issue described
 # here: https://github.com/pytest-dev/pytest-asyncio/issues/371
 @pytest.fixture(scope="session")
-def event_loop(request: Request) -> Iterator[asyncio.AbstractEventLoop]:
+def event_loop(request: "Request") -> Iterator[asyncio.AbstractEventLoop]:
     loop = asyncio.get_event_loop_policy().new_event_loop()
     loop._close = loop.close
     loop.close = lambda: None

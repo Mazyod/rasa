@@ -1,5 +1,0 @@
-tracker_store:
-    type: SQL
-    dialect: "postgresql"
-    url: "localhost"
-    db: "rasa"

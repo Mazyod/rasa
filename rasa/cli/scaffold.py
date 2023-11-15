@@ -96,8 +96,6 @@ def print_run_or_instructions(args: argparse.Namespace) -> None:
             "credentials",
             "cors",
             "auth_token",
-            "jwt_secret",
-            "jwt_method",
             "enable_api",
             "remote_storage",
         ]

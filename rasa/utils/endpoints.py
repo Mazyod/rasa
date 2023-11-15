@@ -5,7 +5,6 @@ import aiohttp
 import logging
 import os
 from aiohttp.client_exceptions import ContentTypeError
-from sanic.request import Request
 from typing import Any, Optional, Text, Dict
 
 from rasa.shared.exceptions import FileNotFoundException
@@ -222,25 +221,8 @@ class ClientResponseError(aiohttp.ClientError):
         super().__init__(f"{status}, {message}, body='{text}'")
 
 
-def bool_arg(request: Request, name: Text, default: bool = True) -> bool:
-    """Returns a passed boolean argument of the request or a default.
-
-    Checks the `name` parameter of the request if it contains a valid
-    boolean value. If not, `default` is returned.
-
-    Args:
-        request: Sanic request.
-        name: Name of argument.
-        default: Default value for `name` argument.
-
-    Returns:
-        A bool value if `name` is a valid boolean, `default` otherwise.
-    """
-    return str(request.args.get(name, default)).lower() == "true"
-
-
 def float_arg(
-    request: Request, key: Text, default: Optional[float] = None
+    request: "Request", key: Text, default: Optional[float] = None
 ) -> Optional[float]:
     """Returns a passed argument cast as a float or None.
 
@@ -268,7 +250,7 @@ def float_arg(
 
 
 def int_arg(
-    request: Request, key: Text, default: Optional[int] = None
+    request: "Request", key: Text, default: Optional[int] = None
 ) -> Optional[int]:
     """Returns a passed argument cast as an int or None.
 

@@ -23,7 +23,7 @@ import rasa.shared.utils.cli
 import rasa.shared.utils.io
 from rasa.cli import utils as cli_utils
 from rasa.core import utils
-from rasa.core.channels.rest import RestInput
+from rasa.core.channels.channel import InputChannel
 from rasa.core.constants import DEFAULT_SERVER_URL, DEFAULT_STREAM_READING_TIMEOUT
 from rasa.shared.constants import INTENT_MESSAGE_PREFIX
 from rasa.shared.utils.io import DEFAULT_ENCODING
@@ -234,10 +234,10 @@ async def record_messages(
     return num_messages
 
 
-class CmdlineInput(RestInput):
+class CmdlineInput(InputChannel):
     @classmethod
     def name(cls) -> Text:
         return "cmdline"
 
     def url_prefix(self) -> Text:
-        return RestInput.name()
+        return "rest"

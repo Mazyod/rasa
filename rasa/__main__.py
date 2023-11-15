@@ -4,7 +4,6 @@ import os
 import platform
 import sys
 
-from rasa_sdk import __version__ as rasa_sdk_version
 from rasa.constants import MINIMUM_COMPATIBLE_VERSION
 from rasa.utils.log_utils import configure_structlog
 
@@ -13,15 +12,12 @@ import rasa.utils.tensorflow.environment as tf_env
 from rasa import version
 from rasa.cli import (
     data,
-    export,
-    interactive,
     run,
     scaffold,
     shell,
     test,
     train,
     visualize,
-    x,
     evaluate,
 )
 from rasa.cli.arguments.default_arguments import add_logging_options
@@ -61,12 +57,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
     run.add_subparser(subparsers, parents=parent_parsers)
     shell.add_subparser(subparsers, parents=parent_parsers)
     train.add_subparser(subparsers, parents=parent_parsers)
-    interactive.add_subparser(subparsers, parents=parent_parsers)
     test.add_subparser(subparsers, parents=parent_parsers)
     visualize.add_subparser(subparsers, parents=parent_parsers)
     data.add_subparser(subparsers, parents=parent_parsers)
-    export.add_subparser(subparsers, parents=parent_parsers)
-    x.add_subparser(subparsers, parents=parent_parsers)
     evaluate.add_subparser(subparsers, parents=parent_parsers)
 
     return parser
@@ -76,7 +69,6 @@ def print_version() -> None:
     """Prints version information of rasa tooling and python."""
     print(f"Rasa Version      :         {version.__version__}")
     print(f"Minimum Compatible Version: {MINIMUM_COMPATIBLE_VERSION}")
-    print(f"Rasa SDK Version  :         {rasa_sdk_version}")
     print(f"Python Version    :         {platform.python_version()}")
     print(f"Operating System  :         {platform.platform()}")
     print(f"Python Path       :         {sys.executable}")

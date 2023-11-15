@@ -1,7 +1,0 @@
-language: "en"
-
-pipeline:
-- name: "CountVectorsFeaturizer"
-- name: "LogisticRegressionClassifier"
-- name: "DucklingEntityExtractor"
-  url: "http://duckling:8000"

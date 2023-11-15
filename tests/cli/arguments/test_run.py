@@ -5,13 +5,6 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from rasa.cli.arguments.run import add_jwt_arguments, add_server_settings_arguments
-from rasa.env import (
-    JWT_SECRET_ENV,
-    JWT_METHOD_ENV,
-    JWT_PRIVATE_KEY_ENV,
-    DEFAULT_JWT_METHOD,
-    AUTH_TOKEN_ENV,
-)
 
 
 @pytest.mark.parametrize(

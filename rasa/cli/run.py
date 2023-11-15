@@ -36,25 +36,7 @@ def add_subparser(
     run_parser.set_defaults(func=run)
 
     run_subparsers = run_parser.add_subparsers()
-    sdk_subparser = run_subparsers.add_parser(
-        "actions",
-        parents=parents,
-        conflict_handler="resolve",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help="Runs the action server.",
-    )
-    sdk_subparser.set_defaults(func=run_actions)
-
     arguments.set_run_arguments(run_parser)
-    arguments.set_run_action_arguments(sdk_subparser)
-
-
-def run_actions(args: argparse.Namespace) -> None:
-    import rasa_sdk.__main__ as sdk
-
-    args.actions = args.actions or DEFAULT_ACTIONS_PATH
-
-    sdk.main_from_args(args)
 
 
 def _validate_model_path(model_path: Text, parameter: Text, default: Text) -> Text:

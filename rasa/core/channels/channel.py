@@ -1,9 +1,6 @@
 import json
 import logging
 import uuid
-import jwt
-from sanic import Sanic, Blueprint
-from sanic.request import Request
 from typing import (
     Text,
     List,
@@ -83,24 +80,6 @@ class UserMessage:
         self.headers = kwargs.get("headers", None)
 
 
-def register(
-    input_channels: List["InputChannel"], app: Sanic, route: Optional[Text]
-) -> None:
-    """Registers input channel blueprints with Sanic."""
-
-    async def handler(message: UserMessage) -> None:
-        await app.ctx.agent.handle_message(message)
-
-    for channel in input_channels:
-        if route:
-            p = urljoin(route, channel.url_prefix())
-        else:
-            p = None
-        app.blueprint(channel.blueprint(handler), url_prefix=p)
-
-    app.ctx.input_channels = input_channels
-
-
 class InputChannel:
     """Input channel base class."""
 
@@ -115,16 +94,6 @@ class InputChannel:
 
     def url_prefix(self) -> Text:
         return self.name()
-
-    def blueprint(
-        self, on_new_message: Callable[[UserMessage], Awaitable[Any]]
-    ) -> Blueprint:
-        """Defines a Sanic blueprint.
-
-        The blueprint will be attached to a running sanic server and handle
-        incoming routes it registered for.
-        """
-        raise NotImplementedError("Component listener needs to provide blueprint.")
 
     @classmethod
     def raise_missing_credentials_exception(cls) -> NoReturn:
@@ -151,7 +120,7 @@ class InputChannel:
         """
         pass
 
-    def get_metadata(self, request: Request) -> Optional[Dict[Text, Any]]:
+    def get_metadata(self, request: "Request") -> Optional[Dict[Text, Any]]:
         """Extracts additional information from the incoming request.
 
          Implementing this function is not required. However, it can be used to extract
@@ -165,46 +134,6 @@ class InputChannel:
             Metadata which was extracted from the request.
         """
         pass
-
-
-def decode_jwt(bearer_token: Text, jwt_key: Text, jwt_algorithm: Text) -> Dict:
-    """Decodes a Bearer Token using the specific JWT key and algorithm.
-
-    Args:
-        bearer_token: Encoded Bearer token
-        jwt_key: Public JWT key for decoding the Bearer token
-        jwt_algorithm: JWT algorithm used for decoding the Bearer token
-
-    Returns:
-        `Dict` containing the decoded payload if successful or an exception
-        if unsuccessful
-    """
-    authorization_header_value = bearer_token.replace(BEARER_TOKEN_PREFIX, "")
-    return jwt.decode(authorization_header_value, jwt_key, algorithms=jwt_algorithm)
-
-
-def decode_bearer_token(
-    bearer_token: Text, jwt_key: Text, jwt_algorithm: Text
-) -> Optional[Dict]:
-    """Decodes a Bearer Token using the specific JWT key and algorithm.
-
-    Args:
-        bearer_token: Encoded Bearer token
-        jwt_key: Public JWT key for decoding the Bearer token
-        jwt_algorithm: JWT algorithm used for decoding the Bearer token
-
-    Returns:
-        `Dict` containing the decoded payload if successful or `None` if unsuccessful
-    """
-    # noinspection PyBroadException
-    try:
-        return decode_jwt(bearer_token, jwt_key, jwt_algorithm)
-    except jwt.exceptions.InvalidSignatureError:
-        logger.error("JWT public key invalid.")
-    except Exception:
-        logger.exception("Failed to decode bearer token.")
-
-    return None
 
 
 class OutputChannel:

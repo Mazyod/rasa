@@ -1,6 +1,0 @@
-intents:
-  - goodbye
-
-responses:
-  utter_goodbye:
-    - text: "Bye"

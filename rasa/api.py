@@ -14,54 +14,6 @@ if TYPE_CHECKING:
     from rasa.model_training import TrainingResult
 
 
-def run(
-    model: "Text",
-    endpoints: "Text",
-    connector: "Optional[Text]" = None,
-    credentials: "Optional[Text]" = None,
-    **kwargs: "Dict[Text, Any]",
-) -> None:
-    """Runs a Rasa model.
-
-    Args:
-        model: Path to model archive.
-        endpoints: Path to endpoints file.
-        connector: Connector which should be use (overwrites `credentials`
-        field).
-        credentials: Path to channel credentials file.
-        **kwargs: Additional arguments which are passed to
-        `rasa.core.run.serve_application`.
-
-    """
-    import rasa.core.run
-    from rasa.core.utils import AvailableEndpoints
-    from rasa.shared.utils.cli import print_warning
-    import rasa.shared.utils.common
-    from rasa.shared.constants import DOCS_BASE_URL
-
-    _endpoints = AvailableEndpoints.read_endpoints(endpoints)
-
-    if not connector and not credentials:
-        connector = "rest"
-
-        print_warning(
-            f"No chat connector configured, falling back to the "
-            f"REST input channel. To connect your bot to another channel, "
-            f"read the docs here: {DOCS_BASE_URL}/messaging-and-voice-channels"
-        )
-
-    kwargs = rasa.shared.utils.common.minimal_kwargs(
-        kwargs, rasa.core.run.serve_application
-    )
-    rasa.core.run.serve_application(
-        model,
-        channel=connector,
-        credentials=credentials,
-        endpoints=_endpoints,
-        **kwargs,
-    )
-
-
 def train(
     domain: "Text",
     config: "Text",

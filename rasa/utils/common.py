@@ -262,48 +262,6 @@ def update_tensorflow_log_level() -> None:
     logging.getLogger("tensorflow").propagate = False
 
 
-def update_sanic_log_level(
-    log_file: Optional[Text] = None,
-    use_syslog: Optional[bool] = False,
-    syslog_address: Optional[Text] = None,
-    syslog_port: Optional[int] = None,
-    syslog_protocol: Optional[Text] = None,
-) -> None:
-    """Set the log level to 'LOG_LEVEL_LIBRARIES' environment variable ."""
-    from sanic.log import logger, error_logger, access_logger
-
-    log_level = os.environ.get(ENV_LOG_LEVEL_LIBRARIES, DEFAULT_LOG_LEVEL_LIBRARIES)
-
-    logger.setLevel(log_level)
-    error_logger.setLevel(log_level)
-    access_logger.setLevel(log_level)
-
-    logger.propagate = False
-    error_logger.propagate = False
-    access_logger.propagate = False
-
-    if log_file is not None:
-        formatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s]  %(message)s")
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setFormatter(formatter)
-
-        logger.addHandler(file_handler)
-        error_logger.addHandler(file_handler)
-        access_logger.addHandler(file_handler)
-    if use_syslog:
-        formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)-5.5s] [%(process)d]" " %(message)s"
-        )
-        socktype = SOCK_STREAM if syslog_protocol == TCP_PROTOCOL else SOCK_DGRAM
-        syslog_handler = logging.handlers.SysLogHandler(
-            address=(syslog_address, syslog_port), socktype=socktype
-        )
-        syslog_handler.setFormatter(formatter)
-        logger.addHandler(syslog_handler)
-        error_logger.addHandler(syslog_handler)
-        access_logger.addHandler(syslog_handler)
-
-
 def update_asyncio_log_level() -> None:
     """Set the log level of asyncio to the log level.
 

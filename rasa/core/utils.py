@@ -8,12 +8,10 @@ from typing import Any, Dict, Optional, Set, Text, Tuple, Union
 import numpy as np
 
 import rasa.shared.utils.io
-from rasa.constants import DEFAULT_SANIC_WORKERS, ENV_SANIC_WORKERS
 from rasa.shared.constants import DEFAULT_ENDPOINTS_PATH, TCP_PROTOCOL
 
 from rasa.core.lock_store import LockStore, RedisLockStore, InMemoryLockStore
 from rasa.utils.endpoints import EndpointConfig, read_endpoint_config
-from sanic import Sanic
 from socket import SOCK_DGRAM, SOCK_STREAM
 import rasa.cli.utils as cli_utils
 
@@ -94,40 +92,6 @@ def dump_obj_as_yaml_to_file(
     rasa.shared.utils.io.write_yaml(
         obj, filename, should_preserve_key_order=should_preserve_key_order
     )
-
-
-def list_routes(app: Sanic) -> Dict[Text, Text]:
-    """List all the routes of a sanic application. Mainly used for debugging."""
-    from urllib.parse import unquote
-
-    output = {}
-
-    def find_route(suffix: Text, path: Text) -> Optional[Text]:
-        for name, (uri, _) in app.router.routes_names.items():
-            if name.split(".")[-1] == suffix and uri == path:
-                return name
-        return None
-
-    for route in app.router.routes:
-        endpoint = route.parts
-        if endpoint[:-1] in app.router.routes_all and endpoint[-1] == "/":
-            continue
-
-        options = {}
-        for arg in route._params:
-            options[arg] = f"[{arg}]"
-
-        handlers = [(next(iter(route.methods)), route.name.replace("rasa_server.", ""))]
-
-        for method, name in handlers:
-            full_endpoint = "/" + "/".join(endpoint)
-            line = unquote(f"{full_endpoint:50s} {method:30s} {name}")
-            output[name] = line
-
-    url_table = "\n".join(output[url] for url in sorted(output))
-    logger.debug(f"Available web server routes: \n{url_table}")
-
-    return output
 
 
 def extract_args(
@@ -295,48 +259,3 @@ def _lock_store_is_multi_worker_compatible(
         and isinstance(lock_store, EndpointConfig)
         and lock_store.type != "in_memory"
     )
-
-
-def number_of_sanic_workers(lock_store: Union[EndpointConfig, LockStore, None]) -> int:
-    """Get the number of Sanic workers to use in `app.run()`.
-
-    If the environment variable constants.ENV_SANIC_WORKERS is set and is not equal to
-    1, that value will only be permitted if the used lock store is not the
-    `InMemoryLockStore`.
-    """
-
-    def _log_and_get_default_number_of_workers() -> int:
-        logger.debug(
-            f"Using the default number of Sanic workers ({DEFAULT_SANIC_WORKERS})."
-        )
-        return DEFAULT_SANIC_WORKERS
-
-    try:
-        env_value = int(os.environ.get(ENV_SANIC_WORKERS, DEFAULT_SANIC_WORKERS))
-    except ValueError:
-        logger.error(
-            f"Cannot convert environment variable `{ENV_SANIC_WORKERS}` "
-            f"to int ('{os.environ[ENV_SANIC_WORKERS]}')."
-        )
-        return _log_and_get_default_number_of_workers()
-
-    if env_value == DEFAULT_SANIC_WORKERS:
-        return _log_and_get_default_number_of_workers()
-
-    if env_value < 1:
-        logger.debug(
-            f"Cannot set number of Sanic workers to the desired value "
-            f"({env_value}). The number of workers must be at least 1."
-        )
-        return _log_and_get_default_number_of_workers()
-
-    if _lock_store_is_multi_worker_compatible(lock_store):
-        logger.debug(f"Using {env_value} Sanic workers.")
-        return env_value
-
-    logger.debug(
-        f"Unable to assign desired number of Sanic workers ({env_value}) as "
-        f"no `RedisLockStore` or custom `LockStore` endpoint "
-        f"configuration has been found."
-    )
-    return _log_and_get_default_number_of_workers()

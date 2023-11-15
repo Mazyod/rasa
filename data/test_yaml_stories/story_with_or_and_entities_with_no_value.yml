@@ -1,8 +1,0 @@
-stories:
-- story: story with or and entities with no value
-  steps:
-  - intent: greet
-    entities:
-    # slot with the same name was NOT autofilled
-    - name
-  - action: utter_greet

@@ -1,4 +1,0 @@
-event_broker:
-  client_id: kafka-python-rasa
-  security_protocol: PLAINTEXT
-  type: kafka

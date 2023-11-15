@@ -5,7 +5,6 @@ import sys
 from typing import Any, Dict, Optional
 
 import structlog
-from structlog_sentry import SentryProcessor
 from structlog.dev import ConsoleRenderer
 from structlog.typing import EventDict, WrappedLogger
 from rasa.shared.constants import ENV_LOG_LEVEL, DEFAULT_LOG_LEVEL
@@ -95,9 +94,6 @@ def configure_structlog(
         # If some value is in bytes, decode it to a unicode str.
         structlog.processors.UnicodeDecoder(),
         structlog.dev.set_exc_info,
-        # add structlog sentry integration. only log fatal log entries
-        # as events as we are tracking exceptions anyways
-        SentryProcessor(event_level=logging.FATAL),
     ]
 
     if not FORCE_JSON_LOGGING and sys.stderr.isatty():

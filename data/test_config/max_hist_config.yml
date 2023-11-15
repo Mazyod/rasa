@@ -1,7 +1,0 @@
-assistant_id: placeholder_default
-policies:
-  - name: MemoizationPolicy
-    max_history: 5
-  - name: RulePolicy
-  - name: TEDPolicy
-    max_history: 5
