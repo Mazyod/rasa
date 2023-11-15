@@ -16,7 +16,6 @@ from rasa.engine.runner.dask import DaskGraphRunner
 from rasa.engine.storage.local_model_storage import LocalModelStorage
 from rasa.engine.storage.storage import ModelMetadata
 from rasa.model import get_latest_model
-from rasa.plugin import plugin_manager
 from rasa.shared.data import TrainingType
 import rasa.shared.utils.io
 import rasa.core.actions.action
@@ -169,8 +168,6 @@ class MessageProcessor:
 
         await self._run_prediction_loop(message.output_channel, tracker)
 
-        await self.run_anonymization_pipeline(tracker)
-
         await self.save_tracker(tracker)
 
         if isinstance(message.output_channel, CollectingOutputChannel):
@@ -209,26 +206,6 @@ class MessageProcessor:
         )
 
         return tracker
-
-    async def run_anonymization_pipeline(self, tracker: DialogueStateTracker) -> None:
-        """Run the anonymization pipeline on the new tracker events.
-
-        Args:
-            tracker: A tracker representing a conversation state.
-        """
-        anonymization_pipeline = plugin_manager().hook.get_anonymization_pipeline()
-        if anonymization_pipeline is None:
-            return None
-
-        old_tracker = await self.tracker_store.retrieve(tracker.sender_id)
-        new_events = rasa.shared.core.trackers.TrackerEventDiffEngine.event_difference(
-            old_tracker, tracker
-        )
-
-        for event in new_events:
-            body = {"sender_id": tracker.sender_id}
-            body.update(event.as_dict())
-            anonymization_pipeline.run(body)
 
     async def predict_next_for_sender_id(
         self, sender_id: Text

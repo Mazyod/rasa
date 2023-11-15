@@ -9,7 +9,6 @@ from structlog_sentry import SentryProcessor
 from structlog.dev import ConsoleRenderer
 from structlog.typing import EventDict, WrappedLogger
 from rasa.shared.constants import ENV_LOG_LEVEL, DEFAULT_LOG_LEVEL
-from rasa.plugin import plugin_manager
 
 
 FORCE_JSON_LOGGING = os.environ.get("FORCE_JSON_LOGGING")
@@ -60,13 +59,6 @@ def _anonymizer(
         "user_message",
         "json_message",
     ]
-    anonymization_pipeline = plugin_manager().hook.get_anonymization_pipeline()
-
-    if anonymization_pipeline:
-        for key in anonymizable_keys:
-            if key in event_dict:
-                anonymized_value = anonymization_pipeline.log_run(event_dict[key])
-                event_dict[key] = anonymized_value
     return event_dict
 
 

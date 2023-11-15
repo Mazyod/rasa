@@ -9,7 +9,6 @@ from unittest.mock import patch, MagicMock
 import pytest
 from _pytest.logging import LogCaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
-from aiogram.utils.exceptions import TelegramAPIError
 from aiohttp import ClientTimeout
 from aioresponses import aioresponses
 from sanic import Sanic
@@ -279,32 +278,6 @@ def test_telegram_channel():
     assert routes_list["telegram_webhook.message"].startswith(
         "/webhooks/telegram/webhook"
     )
-
-
-def test_telegram_channel_raise_rasa_exception_webhook_not_set(
-    monkeypatch: MonkeyPatch,
-):
-    from rasa.core.channels.telegram import TelegramInput
-
-    input_channel = TelegramInput(
-        # you get this when setting up a bot
-        access_token="123:YOUR_ACCESS_TOKEN",
-        # this is your bots username
-        verify="YOUR_TELEGRAM_BOT",
-        # the url your bot should listen for messages
-        webhook_url="",
-    )
-
-    monkeypatch.setattr(
-        rasa.core.channels.telegram.TelegramOutput,
-        "set_webhook",
-        MagicMock(side_effect=TelegramAPIError("Error from Telegram.")),
-    )
-
-    with pytest.raises(RasaException) as e:
-        rasa.core.run.configure_app([input_channel], port=5004)
-
-    assert "Failed to set channel webhook:" in str(e.value)
 
 
 async def test_handling_of_integer_user_id():

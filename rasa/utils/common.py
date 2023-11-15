@@ -31,8 +31,6 @@ from rasa.constants import (
     DEFAULT_LOG_LEVEL_LIBRARIES,
     ENV_LOG_LEVEL_LIBRARIES,
     ENV_LOG_LEVEL_MATPLOTLIB,
-    ENV_LOG_LEVEL_RABBITMQ,
-    ENV_LOG_LEVEL_KAFKA,
 )
 from rasa.shared.constants import DEFAULT_LOG_LEVEL, ENV_LOG_LEVEL, TCP_PROTOCOL
 from rasa.shared.exceptions import RasaException
@@ -229,10 +227,7 @@ def configure_library_logging() -> None:
     update_tensorflow_log_level()
     update_asyncio_log_level()
     update_apscheduler_log_level()
-    update_socketio_log_level()
     update_matplotlib_log_level(library_log_level)
-    update_kafka_log_level(library_log_level)
-    update_rabbitmq_log_level(library_log_level)
 
 
 def update_apscheduler_log_level() -> None:
@@ -247,17 +242,6 @@ def update_apscheduler_log_level() -> None:
     ]
 
     for logger_name in apscheduler_loggers:
-        logging.getLogger(logger_name).setLevel(log_level)
-        logging.getLogger(logger_name).propagate = False
-
-
-def update_socketio_log_level() -> None:
-    """Set the log level of socketio."""
-    log_level = os.environ.get(ENV_LOG_LEVEL_LIBRARIES, DEFAULT_LOG_LEVEL_LIBRARIES)
-
-    socketio_loggers = ["websockets.protocol", "engineio.server", "socketio.server"]
-
-    for logger_name in socketio_loggers:
         logging.getLogger(logger_name).setLevel(log_level)
         logging.getLogger(logger_name).propagate = False
 
@@ -336,25 +320,6 @@ def update_matplotlib_log_level(library_log_level: Text) -> None:
     """
     log_level = os.environ.get(ENV_LOG_LEVEL_MATPLOTLIB, library_log_level)
     logging.getLogger("matplotlib").setLevel(log_level)
-
-
-def update_kafka_log_level(library_log_level: Text) -> None:
-    """Set the log level of kafka.
-
-    Uses the library specific log level or the general libraries log level.
-    """
-    log_level = os.environ.get(ENV_LOG_LEVEL_KAFKA, library_log_level)
-    logging.getLogger("kafka").setLevel(log_level)
-
-
-def update_rabbitmq_log_level(library_log_level: Text) -> None:
-    """Set the log level of pika.
-
-    Uses the library specific log level or the general libraries log level.
-    """
-    log_level = os.environ.get(ENV_LOG_LEVEL_RABBITMQ, library_log_level)
-    logging.getLogger("aio_pika").setLevel(log_level)
-    logging.getLogger("aiormq").setLevel(log_level)
 
 
 def sort_list_of_dicts_by_first_key(dicts: List[Dict]) -> List[Dict]:

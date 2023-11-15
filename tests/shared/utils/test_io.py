@@ -642,25 +642,3 @@ def test_handle_print_blocking(monkeypatch: MonkeyPatch):
     assert mock.mock_calls[2][1][0] == print_output
     # STDOUT was flushed before __exit__
     assert "flush" in mock.mock_calls[-2][0]
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only test")
-def test_handle_print_blocking_windows(monkeypatch: MonkeyPatch):
-    mock = MagicMock()
-    mock_print = MagicMock()
-    monkeypatch.setattr(rasa.shared.utils.io, "portalocker", mock)
-    monkeypatch.setattr(builtins, "print", mock_print)
-
-    print_output = "Test block handling"
-    rasa.shared.utils.io.handle_print_blocking(print_output)
-
-    assert mock.Lock.called
-    assert mock.Lock.call_args[0][0] == sys.stdout
-
-    assert mock_print.called
-    assert mock_print.call_args[0][0] == print_output
-
-    from colorama import ansitowin32
-
-    assert isinstance(mock_print.call_args[1]["file"], ansitowin32.StreamWrapper)
-    assert mock_print.call_args[1]["flush"]

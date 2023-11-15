@@ -26,7 +26,6 @@ from typing import (
 from rasa.core.agent import Agent
 from rasa.core.channels import UserMessage
 from rasa.core.processor import MessageProcessor
-from rasa.plugin import plugin_manager
 from rasa.shared.nlu.training_data.training_data import TrainingData
 from rasa.utils.common import TempDirectoryPath, get_temp_dir_name
 import rasa.shared.utils.io
@@ -874,13 +873,7 @@ def evaluate_entities(
             merged_predictions, NO_ENTITY_TAG, NO_ENTITY
         )
 
-        cleaned_targets = plugin_manager().hook.clean_entity_targets_for_evaluation(
-            merged_targets=merged_targets, extractor=extractor
-        )
-        if len(cleaned_targets) > 0:
-            cleaned_targets = cleaned_targets[0]
-        else:
-            cleaned_targets = merged_targets
+        cleaned_targets = merged_targets
 
         logger.info(f"Evaluation for entity extractor: {extractor} ")
 
@@ -1284,18 +1277,9 @@ async def get_eval_data(
     should_eval_entities = len(test_data.entity_examples) > 0
 
     for example in tqdm(test_data.nlu_examples):
-        tracker = plugin_manager().hook.mock_tracker_for_evaluation(
-            example=example, model_metadata=processor.model_metadata
-        )
-        # if the user overwrites the default implementation take the last tracker
-        if isinstance(tracker, list):
-            if len(tracker) > 0:
-                tracker = tracker[-1]
-            else:
-                tracker = None
         result = await processor.parse_message(
             UserMessage(text=example.get(TEXT)),
-            tracker=tracker,
+            tracker=None,
             only_output_properties=False,
         )
         _remove_entities_of_extractors(result, PRETRAINED_EXTRACTORS)

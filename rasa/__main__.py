@@ -26,7 +26,6 @@ from rasa.cli import (
 )
 from rasa.cli.arguments.default_arguments import add_logging_options
 from rasa.cli.utils import parse_last_positional_argument_as_model_path
-from rasa.plugin import plugin_manager
 from rasa.shared.exceptions import RasaException
 from rasa.shared.utils.cli import print_error
 from rasa.utils.common import configure_logging_and_warnings
@@ -69,9 +68,6 @@ def create_argument_parser() -> argparse.ArgumentParser:
     export.add_subparser(subparsers, parents=parent_parsers)
     x.add_subparser(subparsers, parents=parent_parsers)
     evaluate.add_subparser(subparsers, parents=parent_parsers)
-    plugin_manager().hook.refine_cli(
-        subparsers=subparsers, parent_parsers=parent_parsers
-    )
 
     return parser
 
@@ -84,10 +80,6 @@ def print_version() -> None:
     print(f"Python Version    :         {platform.python_version()}")
     print(f"Operating System  :         {platform.platform()}")
     print(f"Python Path       :         {sys.executable}")
-
-    result = plugin_manager().hook.get_version_info()
-    if result:
-        print(f"\t{result[0][0]}  :         {result[0][1]}")
 
 
 def main() -> None:
@@ -112,15 +104,6 @@ def main() -> None:
         if hasattr(cmdline_arguments, "func"):
             rasa.utils.io.configure_colored_logging(log_level)
 
-            result = plugin_manager().hook.configure_commandline(
-                cmdline_arguments=cmdline_arguments
-            )
-            endpoints_file = result[0] if result else None
-
-            plugin_manager().hook.init_managers(endpoints_file=endpoints_file)
-            plugin_manager().hook.init_anonymization_pipeline(
-                endpoints_file=endpoints_file
-            )
             # configure structlog
             configure_structlog(log_level)
 

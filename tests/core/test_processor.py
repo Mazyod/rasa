@@ -9,7 +9,6 @@ from pathlib import Path
 import freezegun
 import pytest
 from unittest.mock import MagicMock
-from rasa.plugin import plugin_manager
 
 import time
 import uuid
@@ -1942,10 +1941,6 @@ async def test_run_anonymization_pipeline_no_pipeline(
     sender_id = uuid.uuid4().hex
     tracker = await processor.tracker_store.get_or_create_tracker(sender_id)
 
-    manager = plugin_manager()
-    monkeypatch.setattr(
-        manager.hook, "get_anonymization_pipeline", MagicMock(return_value=None)
-    )
     event_diff = MagicMock()
     monkeypatch.setattr(
         "rasa.shared.core.trackers.TrackerEventDiffEngine.event_difference", event_diff
@@ -1963,12 +1958,6 @@ async def test_run_anonymization_pipeline_mocked_pipeline(
     sender_id = uuid.uuid4().hex
     tracker = await processor.tracker_store.get_or_create_tracker(sender_id)
 
-    manager = plugin_manager()
-    monkeypatch.setattr(
-        manager.hook,
-        "get_anonymization_pipeline",
-        MagicMock(return_value="mock_pipeline"),
-    )
     event_diff = MagicMock()
     monkeypatch.setattr(
         "rasa.shared.core.trackers.TrackerEventDiffEngine.event_difference", event_diff

@@ -646,11 +646,4 @@ def handle_print_blocking(output: Text) -> None:
     """
     # Locking again to obtain STDOUT with a lock.
     with portalocker.Lock(sys.stdout) as lock:
-        if sys.platform == "win32":
-            # colorama is used to fix a regression where colors can not be printed on
-            # windows. https://github.com/RasaHQ/rasa/issues/7053
-            from colorama import AnsiToWin32
-
-            lock = AnsiToWin32(lock).stream
-
         print(output, file=lock, flush=True)
