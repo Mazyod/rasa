@@ -23,7 +23,6 @@ def train(
     force_training: bool = False,
     fixed_model_name: "Optional[Text]" = None,
     persist_nlu_training_data: bool = False,
-    core_additional_arguments: "Optional[Dict]" = None,
     nlu_additional_arguments: "Optional[Dict]" = None,
     model_to_finetune: "Optional[Text]" = None,
     finetuning_epoch_fraction: float = 1.0,
@@ -41,7 +40,6 @@ def train(
         fixed_model_name: Name of model to be stored.
         persist_nlu_training_data: `True` if the NLU training data should be persisted
             with the model.
-        core_additional_arguments: Additional training parameters for core training.
         nlu_additional_arguments: Additional training parameters forwarded to training
             method of each NLU component.
         model_to_finetune: Optional path to a model which should be finetuned or
@@ -63,7 +61,6 @@ def train(
         force_training=force_training,
         fixed_model_name=fixed_model_name,
         persist_nlu_training_data=persist_nlu_training_data,
-        core_additional_arguments=core_additional_arguments,
         nlu_additional_arguments=nlu_additional_arguments,
         model_to_finetune=model_to_finetune,
         finetuning_epoch_fraction=finetuning_epoch_fraction,
@@ -72,7 +69,6 @@ def train(
 
 def test(
     model: "Text",
-    stories: "Text",
     nlu_data: "Text",
     output: "Text" = rasa.shared.constants.DEFAULT_RESULTS_PATH,
     additional_arguments: "Optional[Dict]" = None,
@@ -81,16 +77,13 @@ def test(
 
     Args:
         model: model to test
-        stories: path to the dialogue test data
         nlu_data: path to the NLU test data
         output: path to folder where all output will be stored
         additional_arguments: additional arguments for the test call
     """
-    from rasa.model_testing import test_core
     from rasa.model_testing import test_nlu
 
     if additional_arguments is None:
         additional_arguments = {}
 
-    test_core(model, stories, output, additional_arguments)  # type: ignore[unused-coroutine] # noqa: E501
     test_nlu(model, nlu_data, output, additional_arguments)  # type: ignore[unused-coroutine] # noqa: E501

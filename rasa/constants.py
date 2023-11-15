@@ -4,7 +4,6 @@ TEST_DATA_FILE = "test.yml"
 TRAIN_DATA_FILE = "train.yml"
 NLG_DATA_FILE = "responses.yml"
 RESULTS_FILE = "results.json"
-NUMBER_OF_TRAINING_STORIES_FILE = "num_stories.json"
 PERCENTAGE_KEY = "__percentage__"
 
 PACKAGE_NAME = "rasa"

@@ -2,7 +2,6 @@ import logging
 from collections import defaultdict
 from typing import Set, Text, Optional, Dict, Any, List
 
-import rasa.core.training.story_conflict
 import rasa.shared.nlu.constants
 from rasa.shared.constants import (
     ASSISTANT_ID_DEFAULT_VALUE,
@@ -36,7 +35,6 @@ class Validator:
         self,
         domain: Domain,
         intents: TrainingData,
-        story_graph: StoryGraph,
         config: Optional[Dict[Text, Any]],
     ) -> None:
         """Initializes the Validator object.
@@ -44,23 +42,20 @@ class Validator:
         Args:
             domain: The domain.
             intents: Training data.
-            story_graph: The story graph.
             config: The configuration.
         """
         self.domain = domain
         self.intents = intents
-        self.story_graph = story_graph
         self.config = config or {}
 
     @classmethod
     def from_importer(cls, importer: TrainingDataImporter) -> "Validator":
         """Create an instance from the domain, nlu and story files."""
         domain = importer.get_domain()
-        story_graph = importer.get_stories()
         intents = importer.get_nlu_data()
         config = importer.get_config()
 
-        return cls(domain, intents, story_graph, config)
+        return cls(domain, intents, config)
 
     def _non_default_intents(self) -> List[Text]:
         return [
@@ -281,42 +276,6 @@ class Validator:
                 visited.add(event.action_name)
 
         return everything_is_alright
-
-    def verify_story_structure(
-        self, ignore_warnings: bool = True, max_history: Optional[int] = None
-    ) -> bool:
-        """Verifies that the bot behaviour in stories is deterministic.
-
-        Args:
-            ignore_warnings: When `True`, return `True` even if conflicts were found.
-            max_history: Maximal number of events to take into account for conflict
-                identification.
-
-        Returns:
-            `False` is a conflict was found and `ignore_warnings` is `False`.
-            `True` otherwise.
-        """
-        logger.info("Story structure validation...")
-
-        trackers = TrainingDataGenerator(
-            self.story_graph,
-            domain=self.domain,
-            remove_duplicates=False,
-            augmentation_factor=0,
-        ).generate_story_trackers()
-
-        # Create a list of `StoryConflict` objects
-        conflicts = rasa.core.training.story_conflict.find_story_conflicts(
-            trackers, self.domain, max_history
-        )
-
-        if not conflicts:
-            logger.info("No story structure conflicts found.")
-        else:
-            for conflict in conflicts:
-                logger.warning(conflict)
-
-        return ignore_warnings or not conflicts
 
     def verify_nlu(self, ignore_warnings: bool = True) -> bool:
         """Runs all the validations on intents and utterances."""

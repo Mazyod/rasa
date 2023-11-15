@@ -19,7 +19,6 @@ from rasa.core.exceptions import AgentNotReady
 from rasa.shared.constants import DEFAULT_SENDER_ID
 from rasa.core.lock_store import InMemoryLockStore, LockStore
 from rasa.core.nlg import NaturalLanguageGenerator, TemplatedNaturalLanguageGenerator
-from rasa.core.policies.policy import PolicyPrediction
 from rasa.core.processor import MessageProcessor
 from rasa.core.tracker_store import FailSafeTrackerStore, InMemoryTrackerStore
 from rasa.shared.core.trackers import DialogueStateTracker, EventVerbosity
@@ -438,23 +437,6 @@ class Agent:
     async def log_message(self, message: UserMessage) -> DialogueStateTracker:
         """Append a message to a dialogue - does not predict actions."""
         return await self.processor.log_message(message)  # type: ignore[union-attr]
-
-    @agent_must_be_ready
-    async def execute_action(
-        self,
-        sender_id: Text,
-        action: Text,
-        output_channel: OutputChannel,
-        policy: Optional[Text],
-        confidence: Optional[float],
-    ) -> Optional[DialogueStateTracker]:
-        """Executes an action."""
-        prediction = PolicyPrediction.for_action_name(
-            self.domain, action, policy, confidence or 0.0
-        )
-        return await self.processor.execute_action(  # type: ignore[union-attr]
-            sender_id, action, output_channel, self.nlg, prediction
-        )
 
     @agent_must_be_ready
     async def trigger_intent(

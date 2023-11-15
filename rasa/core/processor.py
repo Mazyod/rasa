@@ -448,42 +448,6 @@ class MessageProcessor:
 
         return tracker
 
-    async def execute_action(
-        self,
-        sender_id: Text,
-        action_name: Text,
-        output_channel: OutputChannel,
-        nlg: NaturalLanguageGenerator,
-        prediction: PolicyPrediction,
-    ) -> Optional[DialogueStateTracker]:
-        """Execute an action for a conversation.
-
-        Note that this might lead to unexpected bot behavior. Rather use an intent
-        to execute certain behavior within a conversation (e.g. by using
-        `trigger_external_user_uttered`).
-
-        Args:
-            sender_id: The ID of the conversation.
-            action_name: The name of the action which should be executed.
-            output_channel: The output channel which should be used for bot responses.
-            nlg: The response generator.
-            prediction: The prediction for the action.
-
-        Returns:
-            The new conversation state. Note that the new state is also persisted.
-        """
-        # we have a Tracker instance for each user
-        # which maintains conversation state
-        tracker = await self.fetch_tracker_and_update_session(sender_id, output_channel)
-
-        action = self._get_action(action_name)
-        await self._run_action(action, tracker, output_channel, nlg, prediction)
-
-        # save tracker state to continue conversation from this state
-        await self.save_tracker(tracker)
-
-        return tracker
-
     def predict_next_with_tracker_if_should(
         self, tracker: DialogueStateTracker
     ) -> Tuple[rasa.core.actions.action.Action, PolicyPrediction]:

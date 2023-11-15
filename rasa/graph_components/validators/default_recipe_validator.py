@@ -20,8 +20,6 @@ from rasa.nlu.selectors.response_selector import ResponseSelector
 from rasa.nlu.tokenizers.tokenizer import Tokenizer
 from rasa.core.policies.rule_policy import RulePolicy
 from rasa.core.policies.policy import Policy, SupportedData
-from rasa.core.policies.memoization import MemoizationPolicy
-from rasa.core.policies.ted_policy import TEDPolicy
 from rasa.core.constants import POLICY_PRIORITY
 from rasa.shared.core.training_data.structures import RuleStep, StoryGraph
 from rasa.shared.constants import (
@@ -46,8 +44,6 @@ import rasa.shared.utils.io
 
 # TODO: Can we replace this with the registered types from the regitry?
 TRAINABLE_EXTRACTORS = [MitieEntityExtractor, CRFEntityExtractor, DIETClassifier]
-# TODO: replace these once the Recipe is merged (used in tests)
-POLICY_CLASSSES = {TEDPolicy, MemoizationPolicy, RulePolicy}
 
 
 def _types_to_str(types: Iterable[Type]) -> Text:

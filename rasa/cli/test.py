@@ -51,14 +51,6 @@ def add_subparser(
     arguments.set_test_arguments(test_parser)
 
     test_subparsers = test_parser.add_subparsers()
-    test_core_parser = test_subparsers.add_parser(
-        "core",
-        parents=parents,
-        conflict_handler="resolve",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help="Tests Rasa Core models using your test stories.",
-    )
-    arguments.set_test_core_arguments(test_core_parser)
 
     test_nlu_parser = test_subparsers.add_parser(
         "nlu",
@@ -68,7 +60,6 @@ def add_subparser(
     )
     arguments.set_test_nlu_arguments(test_nlu_parser)
 
-    test_core_parser.set_defaults(func=run_core_test)
     test_nlu_parser.set_defaults(func=run_nlu_test)
     test_parser.set_defaults(func=test, stories=DEFAULT_E2E_TESTS_PATH)
 
@@ -90,60 +81,6 @@ def _print_core_test_execution_info(args: argparse.Namespace) -> None:
             f"Stories with prediction warnings written to "
             f"'{os.path.join(output, STORIES_WITH_WARNINGS_FILE)}'"
         )
-
-
-async def run_core_test_async(args: argparse.Namespace) -> None:
-    """Run core tests."""
-    from rasa.model_testing import (
-        test_core_models_in_directory,
-        test_core,
-        test_core_models,
-    )
-
-    stories = rasa.cli.utils.get_validated_path(
-        args.stories, "stories", DEFAULT_DATA_PATH
-    )
-
-    output = args.out or DEFAULT_RESULTS_PATH
-    args.errors = not args.no_errors
-    args.warnings = not args.no_warnings
-
-    rasa.shared.utils.io.create_directory(output)
-
-    if isinstance(args.model, list) and len(args.model) == 1:
-        args.model = args.model[0]
-
-    if args.model is None:
-        rasa.shared.utils.cli.print_error(
-            "No model provided. Please make sure to specify "
-            "the model to test with '--model'."
-        )
-        return
-
-    if isinstance(args.model, str):
-        model_path = rasa.cli.utils.get_validated_path(
-            args.model, "model", DEFAULT_MODELS_PATH
-        )
-
-        if args.evaluate_model_directory:
-            await test_core_models_in_directory(
-                args.model, stories, output, use_conversation_test_files=args.e2e
-            )
-        else:
-            await test_core(
-                model=model_path,
-                stories=stories,
-                output=output,
-                additional_arguments=vars(args),
-                use_conversation_test_files=args.e2e,
-            )
-
-    else:
-        await test_core_models(
-            args.model, stories, output, use_conversation_test_files=args.e2e
-        )
-
-    _print_core_test_execution_info(args)
 
 
 async def run_nlu_test_async(

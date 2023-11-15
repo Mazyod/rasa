@@ -27,7 +27,6 @@ from rasa.nlu.tokenizers.whitespace_tokenizer import WhitespaceTokenizer
 from rasa.core.policies.ted_policy import TEDPolicy
 from rasa.core.policies.memoization import MemoizationPolicy, AugmentedMemoizationPolicy
 from rasa.core.policies.rule_policy import RulePolicy
-from rasa.core.policies.unexpected_intent_policy import UnexpecTEDIntentPolicy
 
 DEFAULT_COMPONENTS = [
     # Message Classifiers

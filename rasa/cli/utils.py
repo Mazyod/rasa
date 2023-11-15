@@ -215,7 +215,6 @@ def validate_files(
     fail_on_warnings: bool,
     max_history: Optional[int],
     importer: TrainingDataImporter,
-    stories_only: bool = False,
 ) -> None:
     """Validates either the story structure or the entire project.
 
@@ -223,27 +222,20 @@ def validate_files(
         fail_on_warnings: `True` if the process should exit with a non-zero status
         max_history: The max history to use when validating the story structure.
         importer: The `TrainingDataImporter` to use to load the training data.
-        stories_only: If `True`, only the story structure is validated.
     """
     from rasa.validator import Validator
 
     validator = Validator.from_importer(importer)
 
-    if stories_only:
-        all_good = _validate_story_structure(validator, max_history, fail_on_warnings)
-    else:
-        if importer.get_domain().is_empty():
-            rasa.shared.utils.cli.print_error_and_exit(
-                "Encountered empty domain during validation."
-            )
-
-        valid_domain = _validate_domain(validator)
-        valid_nlu = _validate_nlu(validator, fail_on_warnings)
-        valid_stories = _validate_story_structure(
-            validator, max_history, fail_on_warnings
+    if importer.get_domain().is_empty():
+        rasa.shared.utils.cli.print_error_and_exit(
+            "Encountered empty domain during validation."
         )
 
-        all_good = valid_domain and valid_nlu and valid_stories
+    valid_domain = _validate_domain(validator)
+    valid_nlu = _validate_nlu(validator, fail_on_warnings)
+
+    all_good = valid_domain and valid_nlu
 
     validator.warn_if_config_mandatory_keys_are_not_set()
 
@@ -270,20 +262,6 @@ def _validate_domain(validator: "Validator") -> bool:
 
 def _validate_nlu(validator: "Validator", fail_on_warnings: bool) -> bool:
     return validator.verify_nlu(not fail_on_warnings)
-
-
-def _validate_story_structure(
-    validator: "Validator", max_history: Optional[int], fail_on_warnings: bool
-) -> bool:
-    # Check if a valid setting for `max_history` was given
-    if isinstance(max_history, int) and max_history < 1:
-        raise argparse.ArgumentTypeError(
-            f"The value of `--max-history {max_history}` " f"is not a positive integer."
-        )
-
-    return validator.verify_story_structure(
-        not fail_on_warnings, max_history=max_history
-    )
 
 
 def cancel_cause_not_found(

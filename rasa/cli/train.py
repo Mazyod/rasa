@@ -9,7 +9,6 @@ import rasa.cli.arguments.train as train_arguments
 import rasa.cli.utils
 from rasa.shared.importers.importer import TrainingDataImporter
 import rasa.utils.common
-from rasa.core.train import do_compare_training
 from rasa.shared.constants import (
     CONFIG_MANDATORY_KEYS_CORE,
     CONFIG_MANDATORY_KEYS_NLU,
@@ -40,14 +39,6 @@ def add_subparser(
     train_arguments.set_train_arguments(train_parser)
 
     train_subparsers = train_parser.add_subparsers()
-    train_core_parser = train_subparsers.add_parser(
-        "core",
-        parents=parents,
-        conflict_handler="resolve",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help="Trains a Rasa Core model using your stories.",
-    )
-    train_core_parser.set_defaults(func=run_core_training)
 
     train_nlu_parser = train_subparsers.add_parser(
         "nlu",
@@ -59,7 +50,6 @@ def add_subparser(
 
     train_parser.set_defaults(func=lambda args: run_training(args, can_exit=True))
 
-    train_arguments.set_train_core_arguments(train_core_parser)
     train_arguments.set_train_nlu_arguments(train_nlu_parser)
 
 
@@ -127,52 +117,6 @@ def _model_for_finetuning(args: argparse.Namespace) -> Optional[Text]:
         return args.out
     else:
         return args.finetune
-
-
-def run_core_training(args: argparse.Namespace) -> Optional[Text]:
-    """Trains a Rasa Core model only.
-
-    Args:
-        args: Command-line arguments to configure training.
-
-    Returns:
-        Path to a trained model or `None` if training was not successful.
-    """
-    from rasa.model_training import train_core
-
-    args.domain = rasa.cli.utils.get_validated_path(
-        args.domain, "domain", DEFAULT_DOMAIN_PATH, none_is_valid=True
-    )
-    story_file = rasa.cli.utils.get_validated_path(
-        args.stories, "stories", DEFAULT_DATA_PATH, none_is_valid=True
-    )
-    additional_arguments = {
-        **extract_core_additional_arguments(args)
-    }
-
-    # Policies might be a list for the compare training. Do normal training
-    # if only list item was passed.
-    if not isinstance(args.config, list) or len(args.config) == 1:
-        if isinstance(args.config, list):
-            args.config = args.config[0]
-
-        config = rasa.cli.utils.get_validated_config(
-            args.config, CONFIG_MANDATORY_KEYS_CORE
-        )
-
-        return train_core(
-            domain=args.domain,
-            config=config,
-            stories=story_file,
-            output=args.out,
-            fixed_model_name=args.fixed_model_name,
-            additional_arguments=additional_arguments,
-            model_to_finetune=_model_for_finetuning(args),
-            finetuning_epoch_fraction=args.epoch_fraction,
-        )
-    else:
-        do_compare_training(args, story_file, additional_arguments)
-        return None
 
 
 def run_nlu_training(args: argparse.Namespace) -> Optional[Text]:

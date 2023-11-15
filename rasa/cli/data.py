@@ -46,7 +46,6 @@ def add_subparser(
 
     _add_data_convert_parsers(data_subparsers, parents)
     _add_data_split_parsers(data_subparsers, parents)
-    _add_data_validate_parsers(data_subparsers, parents)
     _add_data_migrate_parsers(data_subparsers, parents)
 
 
@@ -95,54 +94,6 @@ def _add_data_split_parsers(
 
     arguments.set_split_arguments(nlu_split_parser)
 
-    stories_split_parser = split_subparsers.add_parser(
-        "stories",
-        parents=parents,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help="Performs a split of your stories into training and test data "
-        "according to the specified percentages.",
-    )
-    stories_split_parser.set_defaults(func=split_stories_data)
-
-    arguments.set_split_arguments(stories_split_parser)
-
-
-def _add_data_validate_parsers(
-    data_subparsers: SubParsersAction, parents: List[argparse.ArgumentParser]
-) -> None:
-    validate_parser = data_subparsers.add_parser(
-        "validate",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        parents=parents,
-        help="Validates domain and data files to check for possible mistakes.",
-    )
-    _append_story_structure_arguments(validate_parser)
-    validate_parser.set_defaults(
-        func=lambda args: rasa.cli.utils.validate_files(
-            args.fail_on_warnings, args.max_history, _build_training_data_importer(args)
-        )
-    )
-    arguments.set_validator_arguments(validate_parser)
-
-    validate_subparsers = validate_parser.add_subparsers()
-    story_structure_parser = validate_subparsers.add_parser(
-        "stories",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        parents=parents,
-        help="Checks for inconsistencies in the story files.",
-    )
-    _append_story_structure_arguments(story_structure_parser)
-
-    story_structure_parser.set_defaults(
-        func=lambda args: rasa.cli.utils.validate_files(
-            args.fail_on_warnings,
-            args.max_history,
-            _build_training_data_importer(args),
-            stories_only=True,
-        )
-    )
-    arguments.set_validator_arguments(story_structure_parser)
-
 
 def _build_training_data_importer(args: argparse.Namespace) -> "TrainingDataImporter":
     config = rasa.cli.utils.get_validated_path(
@@ -157,16 +108,6 @@ def _build_training_data_importer(args: argparse.Namespace) -> "TrainingDataImpo
     return TrainingDataImporter.load_from_config(
         domain_path=domain, training_data_paths=args.data, config_path=config
     )
-
-
-def _append_story_structure_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
-        "--max-history",
-        type=int,
-        default=None,
-        help="Number of turns taken into account for story structure validation.",
-    )
-    default_arguments.add_config_param(parser)
 
 
 def split_nlu_data(args: argparse.Namespace) -> None:
@@ -185,56 +126,6 @@ def split_nlu_data(args: argparse.Namespace) -> None:
 
     train.persist(args.out, filename=f"training_data{extension}")
     test.persist(args.out, filename=f"test_data{extension}")
-
-
-def split_stories_data(args: argparse.Namespace) -> None:
-    """Load data from a file path and split stories into test and train examples.
-
-    Args:
-        args: Commandline arguments
-    """
-    from rasa.shared.core.training_data.story_reader.yaml_story_reader import (
-        YAMLStoryReader,
-        KEY_STORIES,
-    )
-    from sklearn.model_selection import train_test_split
-
-    data_path = rasa.cli.utils.get_validated_path(args.nlu, "nlu", DEFAULT_DATA_PATH)
-    data_files = rasa.shared.data.get_data_files(
-        data_path, YAMLStoryReader.is_stories_file
-    )
-    out_path = pathlib.Path(args.out)
-    out_path.mkdir(parents=True, exist_ok=True)
-
-    # load Yaml stories data
-    for file_name in data_files:
-        file_data = rasa.shared.utils.io.read_yaml_file(file_name)
-        assert isinstance(file_data, dict)
-        stories = file_data.get(KEY_STORIES, [])
-        if not stories:
-            logger.info(f"File {file_name} has no stories, skipped")
-            continue
-
-        file_path = pathlib.Path(file_name)
-
-        # everything besides stories are going into the training data
-        train, test = train_test_split(
-            stories, test_size=1 - args.training_fraction, random_state=args.random_seed
-        )
-        out_file_train = out_path / ("train_" + file_path.name)
-        out_file_test = out_path / ("test_" + file_path.name)
-
-        # train file contains everything else from the file + train stories
-        file_data[KEY_STORIES] = train
-        rasa.shared.utils.io.write_yaml(file_data, out_file_train)
-
-        # test file contains just test stories
-        rasa.shared.utils.io.write_yaml({KEY_STORIES: test}, out_file_test)
-        logger.info(
-            f"From {file_name} we produced {out_file_train} "
-            f"with {len(train)} stories and {out_file_test} "
-            f"with {len(test)} stories"
-        )
 
 
 def _convert_nlu_data(args: argparse.Namespace) -> None:

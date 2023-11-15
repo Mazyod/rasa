@@ -78,51 +78,6 @@ def _dry_run_result(
     )
 
 
-def get_unresolved_slots(domain: Domain, stories: StoryGraph) -> List[Text]:
-    """Returns a list of unresolved slots.
-
-    Args:
-        domain: The domain.
-        stories: The story graph.
-
-    Returns:
-        A list of unresolved slots.
-    """
-    return list(
-        set(
-            evnt.key
-            for step in stories.story_steps
-            for evnt in step.events
-            if isinstance(evnt, SlotSet)
-        )
-        - set(slot.name for slot in domain.slots)
-    )
-
-
-def _check_unresolved_slots(domain: Domain, stories: StoryGraph) -> None:
-    """Checks if there are any unresolved slots.
-
-    Args:
-        domain: The domain.
-        stories: The story graph.
-
-    Raises:
-        `Sys exit` if there are any unresolved slots.
-
-    Returns:
-        `None` if there are no unresolved slots.
-    """
-    unresolved_slots = get_unresolved_slots(domain, stories)
-    if unresolved_slots:
-        rasa.shared.utils.cli.print_error_and_exit(
-            f"Unresolved slots found in stories/rules🚨 \n"
-            f'Tried to set slots "{unresolved_slots}" that are not present in'
-            f"your domain.\n Check whether they need to be added to the domain or "
-            f"whether there is a spelling error."
-        )
-    return None
-
-
 def train(
     domain: Text,
     config: Text,
@@ -132,7 +87,6 @@ def train(
     force_training: bool = False,
     fixed_model_name: Optional[Text] = None,
     persist_nlu_training_data: bool = False,
-    core_additional_arguments: Optional[Dict] = None,
     nlu_additional_arguments: Optional[Dict] = None,
     model_to_finetune: Optional[Text] = None,
     finetuning_epoch_fraction: float = 1.0,
@@ -150,7 +104,6 @@ def train(
         fixed_model_name: Name of model to be stored.
         persist_nlu_training_data: `True` if the NLU training data should be persisted
             with the model.
-        core_additional_arguments: Additional training parameters for core training.
         nlu_additional_arguments: Additional training parameters forwarded to training
             method of each NLU component.
         model_to_finetune: Optional path to a model which should be finetuned or
@@ -162,48 +115,12 @@ def train(
         An instance of `TrainingResult`.
     """
     file_importer = TrainingDataImporter.load_from_config(
-        config, domain, training_files, core_additional_arguments
+        config, domain, training_files
     )
 
-    stories = file_importer.get_stories()
     nlu_data = file_importer.get_nlu_data()
 
-    training_type = TrainingType.BOTH
-
-    if nlu_data.has_e2e_examples():
-        rasa.shared.utils.common.mark_as_experimental_feature("end-to-end training")
-        training_type = TrainingType.END_TO_END
-
-    if stories.is_empty() and nlu_data.contains_no_pure_nlu_data():
-        rasa.shared.utils.cli.print_error(
-            "No training data given. Please provide stories and NLU data in "
-            "order to train a Rasa model using the '--data' argument."
-        )
-        return TrainingResult(code=1)
-
-    domain_object = file_importer.get_domain()
-    if domain_object.is_empty():
-        rasa.shared.utils.cli.print_warning(
-            "Core training was skipped because no valid domain file was found. "
-            "Only an NLU-model was created. Please specify a valid domain using "
-            "the '--domain' argument or check if the provided domain file exists."
-        )
-        training_type = TrainingType.NLU
-
-    elif stories.is_empty():
-        rasa.shared.utils.cli.print_warning(
-            "No stories present. Just a Rasa NLU model will be trained."
-        )
-        training_type = TrainingType.NLU
-
-    # We will train nlu if there are any nlu example, including from e2e stories.
-    elif nlu_data.contains_no_pure_nlu_data() and not nlu_data.has_e2e_examples():
-        rasa.shared.utils.cli.print_warning(
-            "No NLU data present. Just a Rasa Core model will be trained."
-        )
-        training_type = TrainingType.CORE
-
-    _check_unresolved_slots(domain_object, stories)
+    training_type = TrainingType.NLU
 
     return _train_graph(
         file_importer,
@@ -215,7 +132,6 @@ def train(
         persist_nlu_training_data=persist_nlu_training_data,
         finetuning_epoch_fraction=finetuning_epoch_fraction,
         dry_run=dry_run,
-        **(core_additional_arguments or {}),
         **(nlu_additional_arguments or {}),
     )
 
@@ -323,76 +239,6 @@ def _determine_model_name(
 
     time_format = "%Y%m%d-%H%M%S"
     return f"{prefix}{time.strftime(time_format)}-{randomname.get_name()}.tar.gz"
-
-
-def train_core(
-    domain: Union[Domain, Text],
-    config: Text,
-    stories: Text,
-    output: Text,
-    fixed_model_name: Optional[Text] = None,
-    additional_arguments: Optional[Dict] = None,
-    model_to_finetune: Optional[Text] = None,
-    finetuning_epoch_fraction: float = 1.0,
-) -> Optional[Text]:
-    """Trains a Core model.
-
-    Args:
-        domain: Path to the domain file.
-        config: Path to the config file for Core.
-        stories: Path to the Core training data.
-        output: Output path.
-        fixed_model_name: Name of model to be stored.
-        additional_arguments: Additional training parameters.
-        model_to_finetune: Optional path to a model which should be finetuned or
-            a directory in case the latest trained model should be used.
-        finetuning_epoch_fraction: The fraction currently specified training epochs
-            in the model configuration which should be used for finetuning.
-
-    Returns:
-        Path to the model archive.
-
-    """
-    file_importer = TrainingDataImporter.load_core_importer_from_config(
-        config, domain, [stories], additional_arguments
-    )
-    stories_data = file_importer.get_stories()
-    nlu_data = file_importer.get_nlu_data()
-    domain = file_importer.get_domain()
-
-    if nlu_data.has_e2e_examples():
-        rasa.shared.utils.cli.print_error(
-            "Stories file contains e2e stories. Please train using `rasa train` so that"
-            " the NLU model is also trained."
-        )
-        return None
-
-    if domain.is_empty():
-        rasa.shared.utils.cli.print_error(
-            "Core training was skipped because no valid domain file was found. "
-            "Please specify a valid domain using '--domain' argument or check "
-            "if the provided domain file exists."
-        )
-        return None
-
-    if not stories_data:
-        rasa.shared.utils.cli.print_error(
-            "No stories given. Please provide stories in order to "
-            "train a Rasa Core model using the '--stories' argument."
-        )
-        return None
-
-    _check_unresolved_slots(domain, stories_data)
-
-    return _train_graph(
-        file_importer,
-        training_type=TrainingType.CORE,
-        output_path=output,
-        model_to_finetune=model_to_finetune,
-        fixed_model_name=fixed_model_name,
-        finetuning_epoch_fraction=finetuning_epoch_fraction,
-        **(additional_arguments or {}),
-    ).model
 
 
 def train_nlu(
