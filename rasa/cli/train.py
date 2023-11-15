@@ -78,15 +78,6 @@ def run_training(args: argparse.Namespace, can_exit: bool = False) -> Optional[T
         for f in args.data
     ]
 
-    if not args.skip_validation:
-        logger.info("Started validating domain and training data...")
-        importer = TrainingDataImporter.load_from_config(
-            domain_path=args.domain, training_data_paths=args.data, config_path=config
-        )
-        rasa.cli.utils.validate_files(
-            args.fail_on_validation_warnings, args.validation_max_history, importer
-        )
-
     training_result = train_all(
         domain=domain,
         config=config,
@@ -96,9 +87,6 @@ def run_training(args: argparse.Namespace, can_exit: bool = False) -> Optional[T
         force_training=args.force,
         fixed_model_name=args.fixed_model_name,
         persist_nlu_training_data=args.persist_nlu_data,
-        core_additional_arguments={
-            **extract_core_additional_arguments(args)
-        },
         nlu_additional_arguments=extract_nlu_additional_arguments(args),
         model_to_finetune=_model_for_finetuning(args),
         finetuning_epoch_fraction=args.epoch_fraction,

@@ -10,11 +10,6 @@ from rasa.shared.exceptions import YamlException
 import rasa.shared.utils.io
 import rasa.shared.utils.cli
 from rasa.cli.arguments import test as arguments
-from rasa.core.constants import (
-    FAILED_STORIES_FILE,
-    SUCCESSFUL_STORIES_FILE,
-    STORIES_WITH_WARNINGS_FILE,
-)
 from rasa.shared.constants import (
     CONFIG_SCHEMA_FILE,
     DEFAULT_E2E_TESTS_PATH,
@@ -45,7 +40,7 @@ def add_subparser(
         parents=parents,
         conflict_handler="resolve",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help="Tests Rasa models using your test NLU data and stories.",
+        help="Tests Rasa models using your test NLU data.",
     )
 
     arguments.set_test_arguments(test_parser)
@@ -61,26 +56,6 @@ def add_subparser(
     arguments.set_test_nlu_arguments(test_nlu_parser)
 
     test_nlu_parser.set_defaults(func=run_nlu_test)
-    test_parser.set_defaults(func=test, stories=DEFAULT_E2E_TESTS_PATH)
-
-
-def _print_core_test_execution_info(args: argparse.Namespace) -> None:
-    output = args.out or DEFAULT_RESULTS_PATH
-
-    if args.successes:
-        rasa.shared.utils.cli.print_info(
-            f"Successful stories written to "
-            f"'{os.path.join(output, SUCCESSFUL_STORIES_FILE)}'"
-        )
-    if not args.no_errors:
-        rasa.shared.utils.cli.print_info(
-            f"Failed stories written to '{os.path.join(output, FAILED_STORIES_FILE)}'"
-        )
-    if not args.no_warnings:
-        rasa.shared.utils.cli.print_info(
-            f"Stories with prediction warnings written to "
-            f"'{os.path.join(output, STORIES_WITH_WARNINGS_FILE)}'"
-        )
 
 
 async def run_nlu_test_async(
@@ -199,19 +174,3 @@ def run_nlu_test(args: argparse.Namespace) -> None:
             vars(args),
         )
     )
-
-
-def run_core_test(args: argparse.Namespace) -> None:
-    """Runs Core tests.
-
-    Args:
-        args: the parsed CLI arguments for 'rasa test core'.
-    """
-    asyncio.run(run_core_test_async(args))
-
-
-def test(args: argparse.Namespace) -> None:
-    """Run end-to-end tests."""
-    setattr(args, "e2e", True)
-    run_core_test(args)
-    run_nlu_test(args)

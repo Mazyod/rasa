@@ -3,7 +3,6 @@ from typing import Union
 
 from rasa.cli.arguments.default_arguments import (
     add_config_param,
-    add_stories_param,
     add_nlu_data_param,
     add_out_param,
     add_domain_param,
@@ -27,7 +26,6 @@ def set_train_arguments(parser: argparse.ArgumentParser) -> None:
     add_dry_run_param(parser)
     add_validate_before_train(parser)
     add_augmentation_param(parser)
-    add_debug_plots_param(parser)
 
     _add_num_threads_param(parser)
 
@@ -48,7 +46,6 @@ def set_train_core_arguments(parser: argparse.ArgumentParser) -> None:
     add_out_param(parser, help_text="Directory where your models should be stored.")
 
     add_augmentation_param(parser)
-    add_debug_plots_param(parser)
 
     add_force_param(parser)
 
@@ -192,20 +189,6 @@ def add_augmentation_param(
         type=int,
         default=TrainingTrackerProvider.get_default_config()["augmentation_factor"],
         help="How much data augmentation to use during training.",
-    )
-
-
-def add_debug_plots_param(
-    parser: Union[argparse.ArgumentParser, argparse._ActionsContainer]
-) -> None:
-    """Specifies if conversation flow should be visualized."""
-    parser.add_argument(
-        "--debug-plots",
-        default=TrainingTrackerProvider.get_default_config()["debug_plots"],
-        action="store_true",
-        help="If enabled, will create plots showing checkpoints "
-        "and their connections between story blocks in a  "
-        "file called `story_blocks_connections.html`.",
     )
 
 

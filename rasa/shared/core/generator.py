@@ -267,14 +267,12 @@ class TrainingDataGenerator:
 
     def __init__(
         self,
-        story_graph: StoryGraph,
         domain: Domain,
         remove_duplicates: bool = True,
         unique_last_num_states: Optional[int] = None,
         augmentation_factor: int = 50,
         tracker_limit: Optional[int] = None,
         use_story_concatenation: bool = True,
-        debug_plots: bool = False,
     ):
         """Given a set of story parts, generates all stories that are possible.
 
@@ -283,10 +281,6 @@ class TrainingDataGenerator:
         connect complete stories. Afterwards, duplicate stories will be
         removed and the data is augmented (if augmentation is enabled).
         """
-        self.story_graph = story_graph.with_cycles_removed()
-        if debug_plots:
-            self.story_graph.visualize("story_blocks_connections.html")
-
         self.domain = domain
 
         # 10x factor is a heuristic for augmentation rounds

@@ -28,19 +28,6 @@ def add_model_param(
         )
 
 
-def add_stories_param(
-    parser: Union[argparse.ArgumentParser, argparse._ActionsContainer],
-    stories_name: Text = "training",
-) -> None:
-    parser.add_argument(
-        "-s",
-        "--stories",
-        type=str,
-        default=DEFAULT_DATA_PATH,
-        help=f"File or folder containing your {stories_name} stories.",
-    )
-
-
 def add_nlu_data_param(
     parser: Union[argparse.ArgumentParser, argparse._ActionsContainer],
     help_text: Text,

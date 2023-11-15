@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 
     from questionary import Question
     from typing_extensions import Literal
-    from rasa.validator import Validator
 
 logger = logging.getLogger(__name__)
 
@@ -209,59 +208,6 @@ def get_validated_config(
     config = validate_mandatory_config_keys(config, mandatory_keys)
 
     return config
-
-
-def validate_files(
-    fail_on_warnings: bool,
-    max_history: Optional[int],
-    importer: TrainingDataImporter,
-) -> None:
-    """Validates either the story structure or the entire project.
-
-    Args:
-        fail_on_warnings: `True` if the process should exit with a non-zero status
-        max_history: The max history to use when validating the story structure.
-        importer: The `TrainingDataImporter` to use to load the training data.
-    """
-    from rasa.validator import Validator
-
-    validator = Validator.from_importer(importer)
-
-    if importer.get_domain().is_empty():
-        rasa.shared.utils.cli.print_error_and_exit(
-            "Encountered empty domain during validation."
-        )
-
-    valid_domain = _validate_domain(validator)
-    valid_nlu = _validate_nlu(validator, fail_on_warnings)
-
-    all_good = valid_domain and valid_nlu
-
-    validator.warn_if_config_mandatory_keys_are_not_set()
-
-    if not all_good:
-        rasa.shared.utils.cli.print_error_and_exit(
-            "Project validation completed with errors."
-        )
-
-
-def _validate_domain(validator: "Validator") -> bool:
-    valid_domain_validity = validator.verify_domain_validity()
-    valid_actions_in_stories_rules = validator.verify_actions_in_stories_rules()
-    valid_forms_in_stories_rules = validator.verify_forms_in_stories_rules()
-    valid_form_slots = validator.verify_form_slots()
-    valid_slot_mappings = validator.verify_slot_mappings()
-    return (
-        valid_domain_validity
-        and valid_actions_in_stories_rules
-        and valid_forms_in_stories_rules
-        and valid_form_slots
-        and valid_slot_mappings
-    )
-
-
-def _validate_nlu(validator: "Validator", fail_on_warnings: bool) -> bool:
-    return validator.verify_nlu(not fail_on_warnings)
 
 
 def cancel_cause_not_found(

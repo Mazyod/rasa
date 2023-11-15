@@ -12,8 +12,6 @@ from rasa.engine.storage.local_model_storage import LocalModelStorage
 from rasa.engine.storage.storage import ModelStorage
 from rasa.engine.training.components import FingerprintStatus
 from rasa.engine.training.graph_trainer import GraphTrainer
-from rasa.shared.core.events import SlotSet
-from rasa.shared.core.training_data.structures import StoryGraph
 from rasa.shared.data import TrainingType
 from rasa.shared.importers.importer import TrainingDataImporter
 from rasa.shared.core.domain import Domain
