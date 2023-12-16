@@ -7,9 +7,7 @@ from rasa.cli import SubParsersAction
 from rasa.cli.arguments import run as arguments
 from rasa.shared.constants import (
     DOCS_BASE_URL,
-    DEFAULT_ENDPOINTS_PATH,
     DEFAULT_CREDENTIALS_PATH,
-    DEFAULT_ACTIONS_PATH,
     DEFAULT_MODELS_PATH,
 )
 from rasa.exceptions import ModelNotFound
@@ -62,9 +60,6 @@ def run(args: argparse.Namespace) -> None:
     """
     import rasa
 
-    args.endpoints = rasa.cli.utils.get_validated_path(
-        args.endpoints, "endpoints", DEFAULT_ENDPOINTS_PATH, True
-    )
     args.credentials = rasa.cli.utils.get_validated_path(
         args.credentials, "credentials", DEFAULT_CREDENTIALS_PATH, True
     )
@@ -84,13 +79,6 @@ def run(args: argparse.Namespace) -> None:
 
     # start server if remote storage is configured
     if args.remote_storage is not None:
-        rasa.run(**vars(args))
-        return
-
-    # start server if model server is configured
-    endpoints = AvailableEndpoints.read_endpoints(args.endpoints)
-    model_server = endpoints.model if endpoints and endpoints.model else None
-    if model_server is not None:
         rasa.run(**vars(args))
         return
 

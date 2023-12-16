@@ -6,7 +6,6 @@ from rasa.cli.arguments.default_arguments import (
     add_nlu_data_param,
     add_out_param,
     add_domain_param,
-    add_endpoint_param,
 )
 from rasa.shared.constants import DEFAULT_CONFIG_PATH, DEFAULT_DATA_PATH
 
@@ -29,9 +28,6 @@ def set_train_arguments(parser: argparse.ArgumentParser) -> None:
     add_persist_nlu_data_param(parser)
     add_force_param(parser)
     add_finetune_params(parser)
-    add_endpoint_param(
-        parser, help_text="Configuration file for the connectors as a yml file."
-    )
 
 
 def set_train_core_arguments(parser: argparse.ArgumentParser) -> None:

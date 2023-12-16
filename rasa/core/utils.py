@@ -8,12 +8,9 @@ from typing import Any, Dict, Optional, Set, Text, Tuple, Union
 import numpy as np
 
 import rasa.shared.utils.io
-from rasa.shared.constants import DEFAULT_ENDPOINTS_PATH, TCP_PROTOCOL
+from rasa.shared.constants import TCP_PROTOCOL
 
-from rasa.core.lock_store import LockStore, RedisLockStore, InMemoryLockStore
-from rasa.utils.endpoints import EndpointConfig, read_endpoint_config
 from socket import SOCK_DGRAM, SOCK_STREAM
-import rasa.cli.utils as cli_utils
 
 
 logger = logging.getLogger(__name__)
@@ -131,71 +128,6 @@ def file_as_bytes(path: Text) -> bytes:
         return f.read()
 
 
-class AvailableEndpoints:
-    """Collection of configured endpoints."""
-
-    @classmethod
-    def read_endpoints(cls, endpoint_file: Text) -> "AvailableEndpoints":
-        """Read the different endpoints from a yaml file."""
-        nlg = read_endpoint_config(endpoint_file, endpoint_type="nlg")
-        nlu = read_endpoint_config(endpoint_file, endpoint_type="nlu")
-        action = read_endpoint_config(endpoint_file, endpoint_type="action_endpoint")
-        model = read_endpoint_config(endpoint_file, endpoint_type="models")
-        tracker_store = read_endpoint_config(
-            endpoint_file, endpoint_type="tracker_store"
-        )
-        lock_store = read_endpoint_config(endpoint_file, endpoint_type="lock_store")
-        event_broker = read_endpoint_config(endpoint_file, endpoint_type="event_broker")
-
-        return cls(
-            nlg,
-            nlu,
-            action,
-            model,
-            tracker_store,
-            lock_store,
-            event_broker,
-        )
-
-    def __init__(
-        self,
-        nlg: Optional[EndpointConfig] = None,
-        nlu: Optional[EndpointConfig] = None,
-        action: Optional[EndpointConfig] = None,
-        model: Optional[EndpointConfig] = None,
-        tracker_store: Optional[EndpointConfig] = None,
-        lock_store: Optional[EndpointConfig] = None,
-        event_broker: Optional[EndpointConfig] = None,
-    ) -> None:
-        """Create an `AvailableEndpoints` object."""
-        self.model = model
-        self.action = action
-        self.nlu = nlu
-        self.nlg = nlg
-        self.tracker_store = tracker_store
-        self.lock_store = lock_store
-        self.event_broker = event_broker
-
-
-def read_endpoints_from_path(
-    endpoints_path: Optional[Union[Path, Text]] = None
-) -> AvailableEndpoints:
-    """Get `AvailableEndpoints` object from specified path.
-
-    Args:
-        endpoints_path: Path of the endpoints file to be read. If `None` the
-            default path for that file is used (`endpoints.yml`).
-
-    Returns:
-        `AvailableEndpoints` object read from endpoints file.
-
-    """
-    endpoints_config_path = cli_utils.get_validated_path(
-        endpoints_path, "endpoints", DEFAULT_ENDPOINTS_PATH, True
-    )
-    return AvailableEndpoints.read_endpoints(endpoints_config_path)
-
-
 def replace_floats_with_decimals(obj: Any, round_digits: int = 9) -> Any:
     """Convert all instances in `obj` of `float` to `Decimal`.
 
@@ -242,20 +174,3 @@ def replace_decimals_with_floats(obj: Any) -> Any:
         Input `obj` with all `Decimal` types replaced by `float`s.
     """
     return json.loads(json.dumps(obj, cls=DecimalEncoder))
-
-
-def _lock_store_is_multi_worker_compatible(
-    lock_store: Union[EndpointConfig, LockStore, None]
-) -> bool:
-    if isinstance(lock_store, InMemoryLockStore):
-        return False
-
-    if isinstance(lock_store, RedisLockStore):
-        return True
-
-    # `lock_store` is `None` or `EndpointConfig`
-    return (
-        lock_store is not None
-        and isinstance(lock_store, EndpointConfig)
-        and lock_store.type != "in_memory"
-    )

@@ -17,7 +17,6 @@ from typing import (
 
 import dataclasses
 
-from rasa.core.policies.policy import PolicyPrediction
 from rasa.engine.training.fingerprinting import Fingerprintable
 import rasa.utils.common
 import typing_utils
@@ -117,9 +116,6 @@ def _validate_prediction_targets(
         )
 
     _validate_target(nlu_target, "NLU", List[Message], schema)
-
-    if core_target:
-        _validate_target(core_target, "Core", PolicyPrediction, schema)
 
 
 def _validate_target(

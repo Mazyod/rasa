@@ -18,16 +18,13 @@ from rasa.engine.storage.storage import ModelMetadata
 from rasa.model import get_latest_model
 from rasa.shared.data import TrainingType
 import rasa.shared.utils.io
-import rasa.core.actions.action
 from rasa.core import jobs
-from rasa.core.actions.action import Action
 from rasa.core.channels.channel import (
     CollectingOutputChannel,
     OutputChannel,
     UserMessage,
 )
 import rasa.core.utils
-from rasa.core.policies.policy import PolicyPrediction
 from rasa.engine.runner.interface import GraphRunner
 from rasa.exceptions import ActionLimitReached, ModelNotFound
 from rasa.shared.core.constants import (
@@ -55,16 +52,10 @@ from rasa.shared.constants import (
     DOCS_URL_POLICIES,
     UTTER_PREFIX,
 )
-from rasa.core.nlg import NaturalLanguageGenerator
 from rasa.core.lock_store import LockStore
 from rasa.utils.common import TempDirectoryPath, get_temp_dir_name
-import rasa.core.tracker_store
-import rasa.core.actions.action
 import rasa.shared.core.trackers
 from rasa.shared.core.trackers import DialogueStateTracker, EventVerbosity
-from rasa.shared.core.training_data.story_reader.yaml_story_reader import (
-    YAMLStoryReader,
-)
 from rasa.shared.nlu.constants import (
     ENTITIES,
     INTENT,
@@ -73,7 +64,6 @@ from rasa.shared.nlu.constants import (
     TEXT,
 )
 from rasa.shared.nlu.training_data.message import Message
-from rasa.utils.endpoints import EndpointConfig
 
 logger = logging.getLogger(__name__)
 structlogger = structlog.get_logger()
@@ -87,21 +77,14 @@ class MessageProcessor:
     def __init__(
         self,
         model_path: Union[Text, Path],
-        tracker_store: rasa.core.tracker_store.TrackerStore,
         lock_store: LockStore,
-        generator: NaturalLanguageGenerator,
-        action_endpoint: Optional[EndpointConfig] = None,
         max_number_of_predictions: int = MAX_NUMBER_OF_PREDICTIONS,
         on_circuit_break: Optional[LambdaType] = None,
-        http_interpreter: Optional[RasaNLUHttpInterpreter] = None,
     ) -> None:
         """Initializes a `MessageProcessor`."""
-        self.nlg = generator
-        self.tracker_store = tracker_store
         self.lock_store = lock_store
         self.max_number_of_predictions = max_number_of_predictions
         self.on_circuit_break = on_circuit_break
-        self.action_endpoint = action_endpoint
         self.model_filename, self.model_metadata, self.graph_runner = self._load_model(
             model_path
         )
@@ -118,7 +101,6 @@ class MessageProcessor:
 
         self.model_path = Path(model_path)
         self.domain = self.model_metadata.domain
-        self.http_interpreter = http_interpreter
 
     @staticmethod
     def _load_model(

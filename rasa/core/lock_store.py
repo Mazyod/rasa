@@ -11,7 +11,6 @@ from rasa.shared.exceptions import RasaException, ConnectionException
 import rasa.shared.utils.common
 from rasa.core.constants import DEFAULT_LOCK_LIFETIME
 from rasa.core.lock import TicketLock
-from rasa.utils.endpoints import EndpointConfig
 
 logger = logging.getLogger(__name__)
 
@@ -41,15 +40,10 @@ class LockStore:
     """Base class for ticket locks."""
 
     @staticmethod
-    def create(obj: Union[LockStore, EndpointConfig, None]) -> LockStore:
+    def create(obj: Union[LockStore, None]) -> LockStore:
         """Factory to create a lock store."""
         if isinstance(obj, LockStore):
             return obj
-
-        try:
-            return _create_from_endpoint_config(obj)
-        except ConnectionError as error:
-            raise ConnectionException("Cannot connect to lock store.") from error
 
     @staticmethod
     def create_lock(conversation_id: Text) -> TicketLock:
@@ -192,91 +186,6 @@ class LockStore:
             logger.debug(f"Could not delete lock for conversation '{conversation_id}'.")
 
 
-class RedisLockStore(LockStore):
-    """Redis store for ticket locks."""
-
-    def __init__(
-        self,
-        host: Text = "localhost",
-        port: int = 6379,
-        db: int = 1,
-        username: Optional[Text] = None,
-        password: Optional[Text] = None,
-        use_ssl: bool = False,
-        ssl_certfile: Optional[Text] = None,
-        ssl_keyfile: Optional[Text] = None,
-        ssl_ca_certs: Optional[Text] = None,
-        key_prefix: Optional[Text] = None,
-        socket_timeout: float = DEFAULT_SOCKET_TIMEOUT_IN_SECONDS,
-    ) -> None:
-        """Create a lock store which uses Redis for persistence.
-
-        Args:
-            host: The host of the redis server.
-            port: The port of the redis server.
-            db: The name of the database within Redis which should be used by Rasa
-                Open Source.
-            username: The username which should be used for authentication with the
-                Redis database.
-            password: The password which should be used for authentication with the
-                Redis database.
-            use_ssl: `True` if SSL should be used for the connection to Redis.
-            ssl_certfile: Path to the SSL certificate file.
-            ssl_keyfile: Path to the SSL private key file.
-            ssl_ca_certs: Path to the SSL CA certificate file.
-            key_prefix: prefix to prepend to all keys used by the lock store. Must be
-                alphanumeric.
-            socket_timeout: Timeout in seconds after which an exception will be raised
-                in case Redis doesn't respond within `socket_timeout` seconds.
-        """
-        import redis
-
-        self.red = redis.StrictRedis(
-            host=host,
-            port=int(port),
-            db=int(db),
-            username=username,
-            password=password,
-            ssl=use_ssl,
-            ssl_certfile=ssl_certfile,
-            ssl_keyfile=ssl_keyfile,
-            ssl_ca_certs=ssl_ca_certs,
-            socket_timeout=socket_timeout,
-        )
-
-        self.key_prefix = DEFAULT_REDIS_LOCK_STORE_KEY_PREFIX
-        if key_prefix:
-            logger.debug(f"Setting non-default redis key prefix: '{key_prefix}'.")
-            self._set_key_prefix(key_prefix)
-
-        super().__init__()
-
-    def _set_key_prefix(self, key_prefix: Text) -> None:
-        if isinstance(key_prefix, str) and key_prefix.isalnum():
-            self.key_prefix = key_prefix + ":" + DEFAULT_REDIS_LOCK_STORE_KEY_PREFIX
-        else:
-            logger.warning(
-                f"Omitting provided non-alphanumeric redis key prefix: '{key_prefix}'. "
-                f"Using default '{self.key_prefix}' instead."
-            )
-
-    def get_lock(self, conversation_id: Text) -> Optional[TicketLock]:
-        """Retrieves lock (see parent docstring for more information)."""
-        serialised_lock = self.red.get(self.key_prefix + conversation_id)
-        if serialised_lock:
-            return TicketLock.from_dict(json.loads(serialised_lock))
-
-        return None
-
-    def delete_lock(self, conversation_id: Text) -> None:
-        """Deletes lock for conversation ID."""
-        deletion_successful = self.red.delete(self.key_prefix + conversation_id)
-        self._log_deletion(conversation_id, deletion_successful)
-
-    def save_lock(self, lock: TicketLock) -> None:
-        self.red.set(self.key_prefix + lock.conversation_id, lock.dumps())
-
-
 class InMemoryLockStore(LockStore):
     """In-memory store for ticket locks."""
 
@@ -299,42 +208,3 @@ class InMemoryLockStore(LockStore):
     def save_lock(self, lock: TicketLock) -> None:
         """Save lock in store."""
         self.conversation_locks[lock.conversation_id] = lock
-
-
-def _create_from_endpoint_config(
-    endpoint_config: Optional[EndpointConfig] = None,
-) -> LockStore:
-    """Given an endpoint configuration, create a proper `LockStore` object."""
-    if (
-        endpoint_config is None
-        or endpoint_config.type is None
-        or endpoint_config.type == "in_memory"
-    ):
-        # this is the default type if no lock store type is set
-
-        lock_store: LockStore = InMemoryLockStore()
-    elif endpoint_config.type == "redis":
-        lock_store = RedisLockStore(host=endpoint_config.url, **endpoint_config.kwargs)
-    else:
-        lock_store = _load_from_module_name_in_endpoint_config(endpoint_config)
-
-    logger.debug(f"Connected to lock store '{lock_store.__class__.__name__}'.")
-
-    return lock_store
-
-
-def _load_from_module_name_in_endpoint_config(
-    endpoint_config: EndpointConfig,
-) -> LockStore:
-    """Retrieve a `LockStore` based on its class name."""
-    try:
-        lock_store_class = rasa.shared.utils.common.class_from_module_path(
-            endpoint_config.type
-        )
-        return lock_store_class(endpoint_config=endpoint_config)
-    except (AttributeError, ImportError) as e:
-        raise Exception(
-            f"Could not find a class based on the module path "
-            f"'{endpoint_config.type}'. Failed to create a `LockStore` "
-            f"instance. Error: {e}"
-        )

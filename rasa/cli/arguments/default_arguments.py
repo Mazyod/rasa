@@ -7,7 +7,6 @@ from rasa.shared.constants import (
     DEFAULT_DOMAIN_PATH,
     DEFAULT_MODELS_PATH,
     DEFAULT_DATA_PATH,
-    DEFAULT_ENDPOINTS_PATH,
 )
 
 
@@ -80,15 +79,6 @@ def add_out_param(
         # from user input", so we toggle it only if our default is not set
         required=required and default is None,
     )
-
-
-def add_endpoint_param(
-    parser: Union[argparse.ArgumentParser, argparse._ActionsContainer],
-    help_text: Text,
-    default: Optional[Text] = DEFAULT_ENDPOINTS_PATH,
-) -> None:
-    """Adds an option to an argument parser to configure endpoints path."""
-    parser.add_argument("--endpoints", type=str, default=default, help=help_text)
 
 
 def add_data_param(

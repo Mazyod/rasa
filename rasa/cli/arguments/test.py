@@ -6,7 +6,6 @@ from rasa.shared.constants import DEFAULT_MODELS_PATH, DEFAULT_RESULTS_PATH
 from rasa.cli.arguments.default_arguments import (
     add_model_param,
     add_nlu_data_param,
-    add_endpoint_param,
     add_out_param,
 )
 from rasa.model import get_latest_model
