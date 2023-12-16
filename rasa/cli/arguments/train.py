@@ -8,9 +8,6 @@ from rasa.cli.arguments.default_arguments import (
     add_domain_param,
     add_endpoint_param,
 )
-from rasa.graph_components.providers.training_tracker_provider import (
-    TrainingTrackerProvider,
-)
 from rasa.shared.constants import DEFAULT_CONFIG_PATH, DEFAULT_DATA_PATH
 
 USE_LATEST_MODEL_FOR_FINE_TUNING = True
@@ -25,7 +22,6 @@ def set_train_arguments(parser: argparse.ArgumentParser) -> None:
 
     add_dry_run_param(parser)
     add_validate_before_train(parser)
-    add_augmentation_param(parser)
 
     _add_num_threads_param(parser)
 
@@ -40,12 +36,9 @@ def set_train_arguments(parser: argparse.ArgumentParser) -> None:
 
 def set_train_core_arguments(parser: argparse.ArgumentParser) -> None:
     """Specifies CLI arguments for `rasa train core`."""
-    add_stories_param(parser)
     add_domain_param(parser)
     _add_core_config_param(parser)
     add_out_param(parser, help_text="Directory where your models should be stored.")
-
-    add_augmentation_param(parser)
 
     add_force_param(parser)
 
@@ -173,22 +166,6 @@ def add_validate_before_train(
         type=int,
         default=None,
         help="Number of turns taken into account for story structure validation.",
-    )
-
-
-def add_augmentation_param(
-    parser: Union[argparse.ArgumentParser, argparse._ActionsContainer]
-) -> None:
-    """Sets the augmentation factor for the Core training.
-
-    Args:
-        parser: An instance of `ArgumentParser` or `_ActionsContainer`.
-    """
-    parser.add_argument(
-        "--augmentation",
-        type=int,
-        default=TrainingTrackerProvider.get_default_config()["augmentation_factor"],
-        help="How much data augmentation to use during training.",
     )
 
 

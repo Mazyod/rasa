@@ -40,10 +40,6 @@ from rasa.graph_components.providers.nlu_training_data_provider import (
     NLUTrainingDataProvider,
 )
 from rasa.graph_components.providers.rule_only_provider import RuleOnlyDataProvider
-from rasa.graph_components.providers.story_graph_provider import StoryGraphProvider
-from rasa.graph_components.providers.training_tracker_provider import (
-    TrainingTrackerProvider,
-)
 import rasa.shared.constants
 from rasa.shared.exceptions import RasaException, InvalidConfigException
 from rasa.shared.constants import ASSISTANT_ID_KEY
@@ -376,11 +372,7 @@ class DefaultV1Recipe(Recipe):
         def resolver_name_from_parameter(parameter: str) -> str:
             # we got a couple special cases to handle wher the parameter name
             # doesn't match the provider name
-            if "training_trackers" == parameter:
-                return "training_tracker_provider"
-            elif "tracker" == parameter:
-                return PLACEHOLDER_TRACKER
-            elif "training_data" == parameter:
+            if "training_data" == parameter:
                 return "nlu_training_data_provider"
             return f"{parameter}_provider"
 
@@ -567,20 +559,6 @@ class DefaultV1Recipe(Recipe):
             fn="provide",
             config={"exclusion_percentage": cli_parameters.get("exclusion_percentage")},
             is_input=True,
-        )
-        train_nodes["training_tracker_provider"] = SchemaNode(
-            needs={
-                "story_graph": "story_graph_provider",
-                "domain": "domain_for_core_training_provider",
-            },
-            uses=TrainingTrackerProvider,
-            constructor_name="create",
-            fn="provide",
-            config={
-                param: cli_parameters[param]
-                for param in ["debug_plots", "augmentation_factor"]
-                if param in cli_parameters
-            },
         )
 
         policy_with_end_to_end_support_used = False
