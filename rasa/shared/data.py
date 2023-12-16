@@ -40,23 +40,6 @@ def is_likely_json_file(file_path: Text) -> bool:
     return Path(file_path).suffix in set(JSON_FILE_EXTENSIONS)
 
 
-def get_core_directory(paths: Optional[Union[Text, List[Text]]]) -> Text:
-    """Recursively collects all Core training files from a list of paths.
-
-    Args:
-        paths: List of paths to training files or folders containing them.
-
-    Returns:
-        Path to temporary directory containing all found Core training files.
-    """
-    from rasa.shared.core.training_data.story_reader.yaml_story_reader import (
-        YAMLStoryReader,
-    )
-
-    core_files = get_data_files(paths, YAMLStoryReader.is_stories_file)
-    return _copy_files_to_new_dir(core_files)
-
-
 def get_nlu_directory(paths: Optional[Union[Text, List[Text]]]) -> Text:
     """Recursively collects all NLU training files from a list of paths.
 

@@ -12,7 +12,6 @@ import rasa.shared.utils.cli
 from rasa.cli.arguments import test as arguments
 from rasa.shared.constants import (
     CONFIG_SCHEMA_FILE,
-    DEFAULT_E2E_TESTS_PATH,
     DEFAULT_CONFIG_PATH,
     DEFAULT_MODELS_PATH,
     DEFAULT_DATA_PATH,

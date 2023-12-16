@@ -87,7 +87,6 @@ KEY_ENTITIES = "entities"
 KEY_RESPONSES = "responses"
 KEY_ACTIONS = "actions"
 KEY_FORMS = "forms"
-KEY_E2E_ACTIONS = "e2e_actions"
 KEY_RESPONSES_TEXT = "text"
 
 ALL_DOMAIN_KEYS = [
@@ -97,7 +96,6 @@ ALL_DOMAIN_KEYS = [
     KEY_ENTITIES,
     KEY_INTENTS,
     KEY_RESPONSES,
-    KEY_E2E_ACTIONS,
     SESSION_CONFIG_KEY,
 ]
 
@@ -268,7 +266,7 @@ class Domain:
             action_names=actions,
             forms=data.get(KEY_FORMS, {}),
             data=Domain._cleaned_data(data),
-            action_texts=data.get(KEY_E2E_ACTIONS, []),
+            action_texts=[],
             session_config=session_config,
             **additional_arguments,
         )
@@ -369,7 +367,6 @@ class Domain:
             KEY_INTENTS: rasa.shared.utils.common.merge_lists_of_dicts,
             KEY_ENTITIES: rasa.shared.utils.common.merge_lists_of_dicts,
             KEY_ACTIONS: rasa.shared.utils.common.merge_lists_of_dicts,
-            KEY_E2E_ACTIONS: rasa.shared.utils.common.merge_lists,
             KEY_FORMS: rasa.shared.utils.common.merge_dicts,
             KEY_RESPONSES: rasa.shared.utils.common.merge_dicts,
             KEY_SLOTS: rasa.shared.utils.common.merge_dicts,
@@ -1929,7 +1926,6 @@ def warn_about_duplicates_found_during_domain_merging(
         KEY_INTENTS,
         KEY_FORMS,
         KEY_ACTIONS,
-        KEY_E2E_ACTIONS,
         KEY_RESPONSES,
         KEY_SLOTS,
         KEY_ENTITIES,

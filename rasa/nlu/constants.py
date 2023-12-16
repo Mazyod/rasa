@@ -17,7 +17,7 @@ ENTITY_ATTRIBUTE_CONFIDENCE_ROLE = (
 
 EXTRACTOR = "extractor"
 
-PRETRAINED_EXTRACTORS = {"DucklingEntityExtractor", "SpacyEntityExtractor"}
+PRETRAINED_EXTRACTORS = {"DucklingEntityExtractor"}
 
 NUMBER_OF_SUB_TOKENS = "number_of_sub_tokens"
 
@@ -40,11 +40,6 @@ LANGUAGE_MODEL_DOCS = {
     rasa.shared.nlu.constants.TEXT: "text_language_model_doc",
     rasa.shared.nlu.constants.RESPONSE: "response_language_model_doc",
     rasa.shared.nlu.constants.ACTION_TEXT: "action_text_model_doc",
-}
-SPACY_DOCS = {
-    rasa.shared.nlu.constants.TEXT: "text_spacy_doc",
-    rasa.shared.nlu.constants.RESPONSE: "response_spacy_doc",
-    rasa.shared.nlu.constants.ACTION_TEXT: "action_text_spacy_doc",
 }
 
 TOKENS_NAMES = {

@@ -9,12 +9,7 @@ from typing import Dict, Text, Any, Tuple, Type, Optional, List, Callable, Set, 
 
 import dataclasses
 
-from rasa.core.featurizers.precomputation import (
-    CoreFeaturizationInputConverter,
-    CoreFeaturizationCollector,
-)
 from rasa.shared.exceptions import FileNotFoundException
-from rasa.core.policies.ensemble import DefaultPolicyPredictionEnsemble
 
 from rasa.engine.graph import (
     GraphSchema,
@@ -33,9 +28,6 @@ from rasa.graph_components.converters.nlu_message_converter import NLUMessageCon
 from rasa.graph_components.providers.domain_provider import DomainProvider
 from rasa.graph_components.providers.forms_provider import FormsProvider
 from rasa.graph_components.providers.responses_provider import ResponsesProvider
-from rasa.graph_components.providers.domain_for_core_training_provider import (
-    DomainForCoreTrainingProvider,
-)
 from rasa.graph_components.providers.nlu_training_data_provider import (
     NLUTrainingDataProvider,
 )
@@ -261,11 +253,6 @@ class DefaultV1Recipe(Recipe):
         if self._use_nlu:
             preprocessors = self._add_nlu_train_nodes(
                 train_config, train_nodes, cli_parameters
-            )
-
-        if self._use_core:
-            self._add_core_train_nodes(
-                train_config, train_nodes, preprocessors, cli_parameters
             )
 
         return train_nodes, preprocessors
@@ -512,121 +499,6 @@ class DefaultV1Recipe(Recipe):
 
         return model_provider_needs
 
-    def _add_core_train_nodes(
-        self,
-        train_config: Dict[Text, Any],
-        train_nodes: Dict[Text, SchemaNode],
-        preprocessors: List[Text],
-        cli_parameters: Dict[Text, Any],
-    ) -> None:
-        train_nodes["domain_provider"] = SchemaNode(
-            needs={"importer": "finetuning_validator"},
-            uses=DomainProvider,
-            constructor_name="create",
-            fn="provide_train",
-            config={},
-            is_target=True,
-            is_input=True,
-        )
-        train_nodes["domain_for_core_training_provider"] = SchemaNode(
-            needs={"domain": "domain_provider"},
-            uses=DomainForCoreTrainingProvider,
-            constructor_name="create",
-            fn="provide",
-            config={},
-            is_input=True,
-        )
-        train_nodes["forms_provider"] = SchemaNode(
-            needs={"domain": "domain_provider"},
-            uses=FormsProvider,
-            constructor_name="create",
-            fn="provide",
-            config={},
-            is_input=True,
-        )
-        train_nodes["responses_provider"] = SchemaNode(
-            needs={"domain": "domain_provider"},
-            uses=ResponsesProvider,
-            constructor_name="create",
-            fn="provide",
-            config={},
-            is_input=True,
-        )
-        train_nodes["story_graph_provider"] = SchemaNode(
-            needs={"importer": "finetuning_validator"},
-            uses=StoryGraphProvider,
-            constructor_name="create",
-            fn="provide",
-            config={"exclusion_percentage": cli_parameters.get("exclusion_percentage")},
-            is_input=True,
-        )
-
-        policy_with_end_to_end_support_used = False
-        for idx, config in enumerate(train_config["policies"]):
-            component_name = config.pop("name")
-            component = self._from_registry(component_name)
-
-            extra_config_from_cli = self._extra_config_from_cli(
-                cli_parameters, component.clazz, config
-            )
-
-            requires_end_to_end_data = self._use_end_to_end and (
-                self.ComponentType.POLICY_WITH_END_TO_END_SUPPORT in component.types
-            )
-            policy_with_end_to_end_support_used = (
-                policy_with_end_to_end_support_used or requires_end_to_end_data
-            )
-
-            needs = self._get_needs_from_args(component.clazz, "train")
-            if requires_end_to_end_data:
-                needs["precomputations"] = "end_to_end_features_provider"
-            # during core training we use a stripped down version of the domain
-            needs["domain"] = "domain_for_core_training_provider"
-            train_nodes[f"train_{component_name}{idx}"] = SchemaNode(
-                needs=needs,
-                uses=component.clazz,
-                constructor_name="load" if self._is_finetuning else "create",
-                fn="train",
-                is_target=True,
-                config={**config, **extra_config_from_cli},
-            )
-
-        if self._use_end_to_end and policy_with_end_to_end_support_used:
-            self._add_end_to_end_features_for_training(preprocessors, train_nodes)
-
-    def _add_end_to_end_features_for_training(
-        self, preprocessors: List[Text], train_nodes: Dict[Text, SchemaNode]
-    ) -> None:
-        train_nodes["story_to_nlu_training_data_converter"] = SchemaNode(
-            needs={
-                "story_graph": "story_graph_provider",
-                "domain": "domain_for_core_training_provider",
-            },
-            uses=CoreFeaturizationInputConverter,
-            constructor_name="create",
-            fn="convert_for_training",
-            config={},
-            is_input=True,
-        )
-
-        last_node_name = "story_to_nlu_training_data_converter"
-        for preprocessor in preprocessors:
-            node = copy.deepcopy(train_nodes[preprocessor])
-            node.needs["training_data"] = last_node_name
-
-            node_name = f"e2e_{preprocessor}"
-            train_nodes[node_name] = node
-            last_node_name = node_name
-
-        node_with_e2e_features = "end_to_end_features_provider"
-        train_nodes[node_with_e2e_features] = SchemaNode(
-            needs={"messages": last_node_name},
-            uses=CoreFeaturizationCollector,
-            constructor_name="create",
-            fn="collect",
-            config={},
-        )
-
     def _create_predict_nodes(
         self,
         config: Dict[Text, SchemaNode],
@@ -666,11 +538,6 @@ class DefaultV1Recipe(Recipe):
             fn="process",
             config={},
         )
-
-        if self._use_core:
-            self._add_core_predict_nodes(
-                predict_config, predict_nodes, train_nodes, preprocessors
-            )
 
         return predict_nodes
 
@@ -782,114 +649,6 @@ class DefaultV1Recipe(Recipe):
         )
 
         return node_name
-
-    def _add_core_predict_nodes(
-        self,
-        predict_config: Dict[Text, Any],
-        predict_nodes: Dict[Text, SchemaNode],
-        train_nodes: Dict[Text, SchemaNode],
-        preprocessors: List[Text],
-    ) -> None:
-        predict_nodes["domain_provider"] = SchemaNode(
-            **DEFAULT_PREDICT_KWARGS,
-            needs={},
-            uses=DomainProvider,
-            fn="provide_inference",
-            config={},
-            resource=Resource("domain_provider"),
-        )
-
-        node_with_e2e_features = None
-
-        if "end_to_end_features_provider" in train_nodes:
-            node_with_e2e_features = self._add_end_to_end_features_for_inference(
-                predict_nodes, preprocessors
-            )
-
-        rule_policy_resource = None
-        policies: List[Text] = []
-
-        for idx, config in enumerate(predict_config["policies"]):
-            component_name = config.pop("name")
-            component = self._from_registry(component_name)
-
-            train_node_name = f"train_{component_name}{idx}"
-            node_name = f"run_{component_name}{idx}"
-
-            from rasa.core.policies.rule_policy import RulePolicy
-
-            if issubclass(component.clazz, RulePolicy) and not rule_policy_resource:
-                rule_policy_resource = train_node_name
-
-            needs = self._get_needs_from_args(
-                train_nodes[train_node_name].uses, "predict_action_probabilities"
-            )
-            if (
-                self.ComponentType.POLICY_WITH_END_TO_END_SUPPORT in component.types
-                and node_with_e2e_features
-            ):
-                needs["precomputations"] = node_with_e2e_features
-
-            predict_nodes[node_name] = dataclasses.replace(
-                train_nodes[train_node_name],
-                **DEFAULT_PREDICT_KWARGS,
-                needs=needs,
-                fn="predict_action_probabilities",
-                resource=Resource(train_node_name),
-            )
-            policies.append(node_name)
-
-        predict_nodes["rule_only_data_provider"] = SchemaNode(
-            **DEFAULT_PREDICT_KWARGS,
-            needs={},
-            uses=RuleOnlyDataProvider,
-            fn="provide",
-            config={},
-            resource=Resource(rule_policy_resource) if rule_policy_resource else None,
-        )
-
-        predict_nodes["select_prediction"] = SchemaNode(
-            **DEFAULT_PREDICT_KWARGS,
-            needs={
-                **{f"policy{idx}": name for idx, name in enumerate(policies)},
-                "domain": "domain_provider",
-                "tracker": PLACEHOLDER_TRACKER,
-            },
-            uses=DefaultPolicyPredictionEnsemble,
-            fn="combine_predictions_from_kwargs",
-            config={},
-        )
-
-    def _add_end_to_end_features_for_inference(
-        self, predict_nodes: Dict[Text, SchemaNode], preprocessors: List[Text]
-    ) -> Text:
-        predict_nodes["tracker_to_message_converter"] = SchemaNode(
-            **DEFAULT_PREDICT_KWARGS,
-            needs={"tracker": PLACEHOLDER_TRACKER},
-            uses=CoreFeaturizationInputConverter,
-            fn="convert_for_inference",
-            config={},
-        )
-
-        last_node_name = "tracker_to_message_converter"
-        for preprocessor in preprocessors:
-            node = dataclasses.replace(
-                predict_nodes[preprocessor], needs={"messages": last_node_name}
-            )
-
-            node_name = f"e2e_{preprocessor}"
-            predict_nodes[node_name] = node
-            last_node_name = node_name
-
-        node_with_e2e_features = "end_to_end_features_provider"
-        predict_nodes[node_with_e2e_features] = SchemaNode(
-            **DEFAULT_PREDICT_KWARGS,
-            needs={"messages": last_node_name},
-            uses=CoreFeaturizationCollector,
-            fn="collect",
-            config={},
-        )
-        return node_with_e2e_features
 
     @staticmethod
     def auto_configure(

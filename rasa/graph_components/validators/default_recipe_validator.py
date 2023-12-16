@@ -2,7 +2,6 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Iterable, List, Dict, Text, Any, Set, Type, cast
 
-from rasa.core.featurizers.precomputation import CoreFeaturizationInputConverter
 from rasa.engine.graph import ExecutionContext, GraphComponent, GraphSchema, SchemaNode
 from rasa.engine.storage.storage import ModelStorage
 from rasa.engine.storage.resource import Resource
@@ -18,23 +17,8 @@ from rasa.nlu.featurizers.sparse_featurizer.regex_featurizer import RegexFeaturi
 from rasa.nlu.classifiers.diet_classifier import DIETClassifier
 from rasa.nlu.selectors.response_selector import ResponseSelector
 from rasa.nlu.tokenizers.tokenizer import Tokenizer
-from rasa.core.policies.rule_policy import RulePolicy
-from rasa.core.policies.policy import Policy, SupportedData
-from rasa.core.constants import POLICY_PRIORITY
-from rasa.shared.core.training_data.structures import RuleStep, StoryGraph
 from rasa.shared.constants import (
-    DEFAULT_CONFIG_PATH,
     DOCS_URL_COMPONENTS,
-    DOCS_URL_DEFAULT_ACTIONS,
-    DOCS_URL_POLICIES,
-    DOCS_URL_RULES,
-)
-from rasa.shared.core.domain import Domain, InvalidDomain
-from rasa.shared.core.constants import (
-    ACTION_BACK_NAME,
-    ACTION_RESTART_NAME,
-    USER_INTENT_BACK,
-    USER_INTENT_RESTART,
 )
 from rasa.shared.exceptions import InvalidConfigException
 from rasa.shared.importers.importer import TrainingDataImporter
@@ -79,11 +63,6 @@ class DefaultV1RecipeValidator(GraphComponent):
         """
         self._graph_schema = graph_schema
         self._component_types = set(node.uses for node in graph_schema.nodes.values())
-        self._policy_schema_nodes: List[SchemaNode] = [
-            node
-            for node in self._graph_schema.nodes.values()
-            if issubclass(node.uses, Policy)
-        ]
 
     def validate(self, importer: TrainingDataImporter) -> TrainingDataImporter:
         """Validates the current graph schema against the training data and domain.
@@ -96,9 +75,6 @@ class DefaultV1RecipeValidator(GraphComponent):
         nlu_data = importer.get_nlu_data()
         self._validate_nlu(nlu_data)
 
-        story_graph = importer.get_stories()
-        domain = importer.get_domain()
-        self._validate_core(story_graph, domain)
         return importer
 
     def _validate_nlu(self, training_data: TrainingData) -> None:
@@ -268,12 +244,7 @@ class DefaultV1RecipeValidator(GraphComponent):
             if issubclass(schema_node.uses, Tokenizer) and schema_node.fn != "train"
         ]
 
-        is_end_to_end = any(
-            issubclass(schema_node.uses, CoreFeaturizationInputConverter)
-            for schema_node in self._graph_schema.nodes.values()
-        )
-
-        allowed_number_of_tokenizers = 2 if is_end_to_end else 1
+        allowed_number_of_tokenizers = 1
         if len(types_of_tokenizer_schema_nodes) > allowed_number_of_tokenizers:
             raise InvalidConfigException(
                 f"The configuration configuration contains more than one tokenizer, "
@@ -363,143 +334,3 @@ class DefaultV1RecipeValidator(GraphComponent):
         Featurizer.raise_if_featurizer_configs_are_not_compatible(
             [schema_node.config for schema_node in featurizers]
         )
-
-    def _validate_core(self, story_graph: StoryGraph, domain: Domain) -> None:
-        """Validates whether the configuration matches the training data.
-
-        Args:
-           story_graph: a story graph (core training data)
-           domain: the domain
-        """
-        if not self._policy_schema_nodes and story_graph.story_steps:
-            rasa.shared.utils.io.raise_warning(
-                "Found data for training policies but no policy was configured.",
-                docs=DOCS_URL_POLICIES,
-            )
-        if not self._policy_schema_nodes:
-            return
-        self._warn_if_no_rule_policy_is_contained()
-        self._raise_if_domain_contains_form_names_but_no_rule_policy_given(domain)
-        self._raise_if_a_rule_policy_is_incompatible_with_domain(domain)
-        self._validate_policy_priorities()
-        self._warn_if_rule_based_data_is_unused_or_missing(story_graph=story_graph)
-
-    def _warn_if_no_rule_policy_is_contained(self) -> None:
-        """Warns if there is no rule policy among the given policies."""
-        if not any(node.uses == RulePolicy for node in self._policy_schema_nodes):
-            rasa.shared.utils.io.raise_warning(
-                f"'{RulePolicy.__name__}' is not included in the model's "
-                f"policy configuration. Default intents such as "
-                f"'{USER_INTENT_RESTART}' and '{USER_INTENT_BACK}' will "
-                f"not trigger actions '{ACTION_RESTART_NAME}' and "
-                f"'{ACTION_BACK_NAME}'.",
-                docs=DOCS_URL_DEFAULT_ACTIONS,
-            )
-
-    def _raise_if_domain_contains_form_names_but_no_rule_policy_given(
-        self, domain: Domain
-    ) -> None:
-        """Validates that there exists a rule policy if forms are defined.
-
-        Raises:
-            `InvalidConfigException` if domain and rule policies do not match
-        """
-        contains_rule_policy = any(
-            schema_node
-            for schema_node in self._graph_schema.nodes.values()
-            if issubclass(schema_node.uses, RulePolicy)
-        )
-
-        if domain.form_names and not contains_rule_policy:
-            raise InvalidDomain(
-                "You have defined a form action, but have not added the "
-                f"'{RulePolicy.__name__}' to your policy ensemble. "
-                f"Either remove all forms from your domain or add the "
-                f"'{RulePolicy.__name__}' to your policy configuration."
-            )
-
-    def _raise_if_a_rule_policy_is_incompatible_with_domain(
-        self, domain: Domain
-    ) -> None:
-        """Validates the rule policies against the domain.
-
-        Raises:
-            `InvalidDomain` if domain and rule policies do not match
-        """
-        for schema_node in self._graph_schema.nodes.values():
-            if schema_node.uses == RulePolicy:
-                RulePolicy.raise_if_incompatible_with_domain(
-                    config=schema_node.config, domain=domain
-                )
-
-    def _validate_policy_priorities(self) -> None:
-        """Checks if every policy has a valid priority value.
-
-        A policy must have a priority value. The priority values of
-        the policies used in the configuration should be unique.
-
-        Raises:
-            `InvalidConfigException` if any of the policies doesn't have a priority
-        """
-        priority_dict = defaultdict(list)
-        for schema_node in self._policy_schema_nodes:
-            default_config = schema_node.uses.get_default_config()
-            if POLICY_PRIORITY not in default_config:
-                raise InvalidConfigException(
-                    f"Found a policy {schema_node.uses.__name__} which has no "
-                    f"priority. Every policy must have a priority value which you "
-                    f"can set in the `get_default_config` method of your policy."
-                )
-            default_priority = default_config[POLICY_PRIORITY]
-            priority = schema_node.config.get(POLICY_PRIORITY, default_priority)
-            priority_dict[priority].append(schema_node.uses)
-
-        for k, v in priority_dict.items():
-            if len(v) > 1:
-                rasa.shared.utils.io.raise_warning(
-                    f"Found policies {_types_to_str(v)} with same priority {k} "
-                    f"in PolicyEnsemble. When personalizing "
-                    f"priorities, be sure to give all policies "
-                    f"different priorities.",
-                    docs=DOCS_URL_POLICIES,
-                )
-
-    def _warn_if_rule_based_data_is_unused_or_missing(
-        self, story_graph: StoryGraph
-    ) -> None:
-        """Warns if rule-data is unused or missing.
-
-        Args:
-            story_graph: a story graph (core training data)
-        """
-        consuming_rule_data = any(
-            cast(Policy, policy_node.uses).supported_data()
-            in [SupportedData.RULE_DATA, SupportedData.ML_AND_RULE_DATA]
-            for policy_node in self._policy_schema_nodes
-        )
-
-        # Reminder: We generate rule trackers via:
-        #   rasa/shared/core/generator/...
-        #   .../TrainingDataGenerator/_generate_rule_trackers/
-        contains_rule_tracker = any(
-            isinstance(step, RuleStep) for step in story_graph.ordered_steps()
-        )
-
-        if consuming_rule_data and not contains_rule_tracker:
-            rasa.shared.utils.io.raise_warning(
-                f"Found a rule-based policy in your configuration but "
-                f"no rule-based training data. Please add rule-based "
-                f"stories to your training data or "
-                f"remove the rule-based policy "
-                f"(`{RulePolicy.__name__}`) from your "
-                f"your configuration.",
-                docs=DOCS_URL_RULES,
-            )
-        elif not consuming_rule_data and contains_rule_tracker:
-            rasa.shared.utils.io.raise_warning(
-                f"Found rule-based training data but no policy supporting rule-based "
-                f"data. Please add `{RulePolicy.__name__}` "
-                f"or another rule-supporting "
-                f"policy to the `policies` section in `{DEFAULT_CONFIG_PATH}`.",
-                docs=DOCS_URL_RULES,
-            )

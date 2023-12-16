@@ -1,18 +1,11 @@
 from __future__ import annotations
-from typing import Optional, Text, Dict, List, Union, Iterable, Any
+from typing import Optional, Text, Dict, List, Iterable, Any
 from collections.abc import ValuesView, KeysView
 
-from rasa.engine.graph import GraphComponent
-from rasa.engine.storage.storage import ModelStorage
-from rasa.engine.storage.resource import Resource
-from rasa.engine.graph import ExecutionContext
 from rasa.shared.core.domain import Domain, SubState
 from rasa.shared.core.events import ActionExecuted, UserUttered, Event
-from rasa.shared.core.trackers import DialogueStateTracker
-from rasa.shared.core.training_data.structures import StoryGraph
 from rasa.shared.nlu.constants import ACTION_NAME, ACTION_TEXT, INTENT, TEXT
 from rasa.shared.nlu.training_data.message import Message
-from rasa.shared.nlu.training_data.training_data import TrainingData
 from rasa.shared.nlu.training_data.features import Features
 import rasa.shared.utils.io
 
@@ -302,109 +295,3 @@ class MessageContainerForCoreFeaturization:
             for key, value in key_value_list:
                 if value is not None:
                     self.add(Message(data={key: value}))
-
-
-class CoreFeaturizationInputConverter(GraphComponent):
-    """Provides data for the featurization pipeline.
-
-    During training as well as during inference, the converter de-duplicates the given
-    data (i.e. story graph or list of messages) such that each text and intent from a
-    user message and each action name and action text appears exactly once.
-    """
-
-    @classmethod
-    def create(
-        cls,
-        config: Dict[Text, Any],
-        model_storage: ModelStorage,
-        resource: Resource,
-        execution_context: ExecutionContext,
-    ) -> CoreFeaturizationInputConverter:
-        """Creates a new instance (see parent class for full docstring)."""
-        return cls()
-
-    def convert_for_training(
-        self, domain: Domain, story_graph: StoryGraph
-    ) -> TrainingData:
-        """Creates de-duplicated training data.
-
-        Each possible user text and intent and each action name and action text
-        that can be found in the given domain and story graph appears exactly once
-        in the resulting training data. Moreover, each item is contained in a separate
-        messsage.
-
-        Args:
-           domain: the domain
-           story_graph: a story graph
-        Returns:
-           training data
-        """
-        container = MessageContainerForCoreFeaturization()
-
-        # collect all action and user (intent-only) substates known from domain
-        container.derive_messages_from_domain_and_add(domain=domain)
-
-        # collect all substates we see in the given data
-        all_events = (
-            event
-            for step in story_graph.story_steps
-            for event in step.events
-            if isinstance(event, UserUttered)
-            # because all action names and texts are known to the domain
-        )
-        container.derive_messages_from_events_and_add(events=all_events)
-
-        # Reminder: in case of complex recipes that train CountVectorizers, we'll have
-        # to make sure that there is at least one user substate with a TEXT to ensure
-        # `CountVectorizer` is trained...
-
-        return TrainingData(training_examples=container.all_messages())
-
-    def convert_for_inference(self, tracker: DialogueStateTracker) -> List[Message]:
-        """Creates a list of messages containing single user and action attributes.
-
-        Each possible user text and intent and each action name and action text
-        that can be found in the events of the given tracker will appear exactly once
-        in the resulting messages. Moreover, each item is contained in a separate
-        messsage.
-
-        Args:
-          tracker: a dialogue state tracker containing events
-        Returns:
-          a list of messages
-        """
-        # Note: `tracker.applied_events()` doesn't convert any events to a different
-        # type and hence just iterating over the events is quicker than "applying"
-        # events first and then iterating over results (again).
-        container = MessageContainerForCoreFeaturization()
-        container.derive_messages_from_events_and_add(tracker.events)
-        return container.all_messages()
-
-
-class CoreFeaturizationCollector(GraphComponent):
-    """Collects featurized messages for use by a policy."""
-
-    @classmethod
-    def create(
-        cls,
-        config: Dict[Text, Any],
-        model_storage: ModelStorage,
-        resource: Resource,
-        execution_context: ExecutionContext,
-    ) -> CoreFeaturizationCollector:
-        """Creates a new instance (see parent class for full docstring)."""
-        return cls()
-
-    def collect(
-        self, messages: Union[TrainingData, List[Message]]
-    ) -> MessageContainerForCoreFeaturization:
-        """Collects messages."""
-        if isinstance(messages, TrainingData):
-            messages = messages.training_examples
-        # Note that the input messages had been contained in a lookup table in
-        # `StoryToTrainingDataConverter. Hence, we don't need to worry about
-        # collisions here anymore.
-        container = MessageContainerForCoreFeaturization()
-        for message in messages:
-            container.add(message)
-        return container

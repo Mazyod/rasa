@@ -13,9 +13,6 @@ from rasa.shared.core.domain import Domain
 from rasa.shared.importers.importer import TrainingDataImporter
 import rasa.shared.utils.io
 from rasa.utils.tensorflow.constants import EPOCHS
-from rasa.graph_components.providers.domain_for_core_training_provider import (
-    DomainForCoreTrainingProvider,
-)
 
 FINGERPRINT_CONFIG = "fingerprint-config"
 FINGERPRINT_CORE = "fingerprint-core"
@@ -149,24 +146,6 @@ class FinetuningValidator(GraphComponent):
             ),
         )
 
-        if self._core:
-            # NOTE: If there's a consistency check between domain and core training data
-            # that ensures domain and core training data are consistent, then we can
-            # drop this check.
-            fingerprint_core = self._get_fingerprint_of_domain_pruned_for_core(
-                domain=importer.get_domain()
-            )
-            self._compare_or_memorize(
-                fingerprint_key=FINGERPRINT_CORE,
-                new_fingerprint=fingerprint_core,
-                error_message=(
-                    "Cannot finetune because keys that affect the training of core "
-                    "components have changed."
-                    "Please revert all settings in your domain file that affect the "
-                    "training of core components."
-                ),
-            )
-
         if self._nlu:
             fingerprint_nlu = importer.get_nlu_data().label_fingerprint()
             self._compare_or_memorize(
@@ -209,18 +188,6 @@ class FinetuningValidator(GraphComponent):
                 raise InvalidConfigException(error_message)
         else:
             self._fingerprints[fingerprint_key] = new_fingerprint
-
-    @staticmethod
-    def _get_fingerprint_of_domain_pruned_for_core(domain: Domain) -> Text:
-        """Returns a fingerprint of a pruned version of the domain relevant for core.
-
-        Args:
-            domain: a domain
-        Returns:
-            fingerprint
-        """
-        pruned_domain = DomainForCoreTrainingProvider.create_pruned_version(domain)
-        return pruned_domain.fingerprint()
 
     def _get_fingerprint_of_schema_without_irrelevant_keys(self) -> Text:
         """Returns a fingerprint of the given schema with certain items removed.

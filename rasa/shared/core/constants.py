@@ -35,7 +35,6 @@ ACTION_BACK_NAME = "action_back"
 ACTION_TWO_STAGE_FALLBACK_NAME = "action_two_stage_fallback"
 ACTION_UNLIKELY_INTENT_NAME = "action_unlikely_intent"
 RULE_SNIPPET_ACTION_NAME = "..."
-ACTION_EXTRACT_SLOTS = "action_extract_slots"
 ACTION_VALIDATE_SLOT_MAPPINGS = "action_validate_slot_mappings"
 
 DEFAULT_ACTION_NAMES = [
@@ -52,7 +51,6 @@ DEFAULT_ACTION_NAMES = [
     ACTION_BACK_NAME,
     ACTION_SEND_TEXT_NAME,
     RULE_SNIPPET_ACTION_NAME,
-    ACTION_EXTRACT_SLOTS,
 ]
 
 ACTION_SHOULD_SEND_DOMAIN = "send_domain"

@@ -11,7 +11,6 @@ from rasa.engine.recipes.default_recipe import DefaultV1Recipe
 from rasa.engine.storage.resource import Resource
 from rasa.engine.storage.storage import ModelStorage
 from rasa.nlu.featurizers.sparse_featurizer.sparse_featurizer import SparseFeaturizer
-from rasa.nlu.utils.spacy_utils import SpacyModel
 from rasa.shared.constants import DOCS_URL_COMPONENTS
 import rasa.utils.io as io_utils
 from sklearn.feature_extraction.text import CountVectorizer
@@ -598,21 +597,13 @@ class CountVectorsFeaturizer(SparseFeaturizer, GraphComponent):
             return [], []
 
     def train(
-        self, training_data: TrainingData, model: Optional[SpacyModel] = None
+        self, training_data: TrainingData
     ) -> Resource:
         """Trains the featurizer.
 
         Take parameters from config and
         construct a new count vectorizer using the sklearn framework.
         """
-        if model is not None:
-            # create spacy lemma_ for OOV_words
-            self.OOV_words = [
-                t.lemma_ if self.use_lemma else t.text
-                for w in self.OOV_words
-                for t in model.model(w)
-            ]
-
         # process sentences and collect data for all attributes
         processed_attribute_tokens = self._get_all_attributes_processed_tokens(
             training_data

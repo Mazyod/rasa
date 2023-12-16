@@ -8,9 +8,6 @@ from rasa.engine.storage.resource import Resource
 from rasa.engine.storage.storage import ModelStorage
 from rasa.nlu.extractors.extractor import EntityExtractorMixin
 from rasa.shared.core.domain import Domain
-from rasa.shared.core.training_data.story_reader.yaml_story_reader import (
-    YAMLStoryReader,
-)
 from rasa.shared.nlu.training_data.message import Message
 
 logger = logging.getLogger(__name__)
@@ -48,8 +45,10 @@ class RegexMessageHandler(GraphComponent, EntityExtractorMixin):
             The messages with potentially intent and entity prediction replaced
             in case the message started with a `/`.
         """
+        from rasa import zombie
+
         return [
-            YAMLStoryReader.unpack_regex_message(
+            zombie.unpack_regex_message(
                 message, domain, entity_extractor_name=self.name
             )
             for message in messages

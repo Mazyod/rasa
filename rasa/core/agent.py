@@ -225,44 +225,6 @@ class Agent:
             )
 
     @agent_must_be_ready
-    async def predict_next_for_sender_id(
-        self, sender_id: Text
-    ) -> Optional[Dict[Text, Any]]:
-        """Predict the next action for a sender id."""
-        return await self.processor.predict_next_for_sender_id(  # type: ignore[union-attr] # noqa:E501
-            sender_id
-        )
-
-    @agent_must_be_ready
-    def predict_next_with_tracker(
-        self,
-        tracker: DialogueStateTracker,
-        verbosity: EventVerbosity = EventVerbosity.AFTER_RESTART,
-    ) -> Optional[Dict[Text, Any]]:
-        """Predicts the next action."""
-        return self.processor.predict_next_with_tracker(  # type: ignore[union-attr]
-            tracker, verbosity
-        )
-
-    @agent_must_be_ready
-    async def log_message(self, message: UserMessage) -> DialogueStateTracker:
-        """Append a message to a dialogue - does not predict actions."""
-        return await self.processor.log_message(message)  # type: ignore[union-attr]
-
-    @agent_must_be_ready
-    async def trigger_intent(
-        self,
-        intent_name: Text,
-        entities: List[Dict[Text, Any]],
-        output_channel: OutputChannel,
-        tracker: DialogueStateTracker,
-    ) -> None:
-        """Trigger a user intent, e.g. triggered by an external event."""
-        await self.processor.trigger_external_user_uttered(  # type: ignore[union-attr]
-            intent_name, entities, tracker, output_channel
-        )
-
-    @agent_must_be_ready
     async def handle_text(
         self,
         text_message: Union[Text, Dict[Text, Any]],

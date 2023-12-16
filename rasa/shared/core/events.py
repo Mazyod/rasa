@@ -53,12 +53,6 @@ from rasa.shared.nlu.constants import (
     INTENT_NAME_KEY,
     ENTITY_ATTRIBUTE_ROLE,
     ENTITY_ATTRIBUTE_GROUP,
-    PREDICTED_CONFIDENCE_KEY,
-    INTENT_RANKING_KEY,
-    ENTITY_ATTRIBUTE_TEXT,
-    ENTITY_ATTRIBUTE_START,
-    ENTITY_ATTRIBUTE_CONFIDENCE,
-    ENTITY_ATTRIBUTE_END,
     FULL_RETRIEVAL_INTENT_NAME_KEY,
 )
 
@@ -1418,8 +1412,6 @@ class StoryExported(Event):
 
     def apply_to(self, tracker: "DialogueStateTracker") -> None:
         """Applies event to current conversation state."""
-        if self.path:
-            tracker.export_stories_to_file(self.path)
 
     def __eq__(self, other: Any) -> bool:
         """Compares object with other object."""

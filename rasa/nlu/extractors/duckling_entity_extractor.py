@@ -6,7 +6,6 @@ import os
 import requests
 from typing import Any, List, Optional, Text, Dict
 
-import rasa.utils.endpoints as endpoints_utils
 from rasa.engine.graph import GraphComponent, ExecutionContext
 from rasa.engine.recipes.default_recipe import DefaultV1Recipe
 from rasa.engine.storage.resource import Resource

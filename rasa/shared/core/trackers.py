@@ -737,20 +737,6 @@ class DialogueStateTracker:
             story.story_steps, is_appendable=should_append_stories, is_test_story=e2e
         )
 
-    def export_stories_to_file(self, export_path: Text = "debug_stories.yml") -> None:
-        """Dump the tracker as a story to a file."""
-        from rasa.shared.core.training_data.story_writer.yaml_story_writer import (
-            YAMLStoryWriter,
-        )
-
-        append = os.path.exists(export_path)
-
-        rasa.shared.utils.io.write_text_file(
-            self.export_stories(YAMLStoryWriter(), should_append_stories=append) + "\n",
-            export_path,
-            append=append,
-        )
-
     def get_last_event_for(
         self,
         event_type: Union[Type["EventTypeAlias"], Tuple[Type["EventTypeAlias"], ...]],

@@ -9,16 +9,11 @@ import rasa.shared.core.constants
 import rasa.shared.utils.io
 from rasa.shared.core.domain import (
     Domain,
-    KEY_E2E_ACTIONS,
     KEY_INTENTS,
     KEY_RESPONSES,
     KEY_ACTIONS,
 )
-from rasa.shared.core.events import ActionExecuted, UserUttered
-from rasa.shared.core.training_data.structures import StoryGraph
-from rasa.shared.nlu.training_data.message import Message
 from rasa.shared.nlu.training_data.training_data import TrainingData
-from rasa.shared.nlu.constants import ENTITIES, ACTION_NAME
 from rasa.shared.core.domain import IS_RETRIEVAL_INTENT_KEY
 
 logger = logging.getLogger(__name__)
@@ -46,26 +41,6 @@ class TrainingDataImporter(ABC):
             Loaded `Domain`.
         """
         ...
-
-    @abstractmethod
-    def get_stories(self, exclusion_percentage: Optional[int] = None) -> StoryGraph:
-        """Retrieves the stories that should be used for training.
-
-        Args:
-            exclusion_percentage: Amount of training data that should be excluded.
-
-        Returns:
-            `StoryGraph` containing all loaded stories.
-        """
-        ...
-
-    def get_conversation_tests(self) -> StoryGraph:
-        """Retrieves end-to-end conversation stories for testing.
-
-        Returns:
-            `StoryGraph` containing all loaded stories.
-        """
-        return self.get_stories()
 
     @abstractmethod
     def get_config(self) -> Dict:
@@ -137,11 +112,6 @@ class TrainingDataImporter(ABC):
             config_path, domain_path, training_data_paths, args
         )
 
-        if isinstance(importer, E2EImporter):
-            # When we only train NLU then there is no need to enrich the data with
-            # E2E data from Core training data.
-            importer = importer.importer
-
         return NluDataImporter(importer)
 
     @staticmethod
@@ -169,7 +139,7 @@ class TrainingDataImporter(ABC):
                 RasaFileImporter(config_path, domain_path, training_data_paths)
             ]
 
-        return E2EImporter(ResponsesSyncImporter(CombinedDataImporter(importers)))
+        return ResponsesSyncImporter(CombinedDataImporter(importers))
 
     @staticmethod
     def _importer_from_dict(
@@ -179,14 +149,11 @@ class TrainingDataImporter(ABC):
         training_data_paths: Optional[List[Text]] = None,
         args: Optional[Dict[Text, Any]] = {},
     ) -> Optional["TrainingDataImporter"]:
-        from rasa.shared.importers.multi_project import MultiProjectImporter
         from rasa.shared.importers.rasa import RasaFileImporter
 
         module_path = importer_config.pop("name", None)
         if module_path == RasaFileImporter.__name__:
             importer_class: Type[TrainingDataImporter] = RasaFileImporter
-        elif module_path == MultiProjectImporter.__name__:
-            importer_class = MultiProjectImporter
         else:
             try:
                 importer_class = rasa.shared.utils.common.class_from_module_path(
@@ -226,14 +193,6 @@ class NluDataImporter(TrainingDataImporter):
     def get_domain(self) -> Domain:
         """Retrieves model domain (see parent class for full docstring)."""
         return Domain.empty()
-
-    def get_stories(self, exclusion_percentage: Optional[int] = None) -> StoryGraph:
-        """Retrieves training stories / rules (see parent class for full docstring)."""
-        return StoryGraph([])
-
-    def get_conversation_tests(self) -> StoryGraph:
-        """Retrieves conversation test stories (see parent class for full docstring)."""
-        return StoryGraph([])
 
     def get_config(self) -> Dict:
         """Retrieves model config (see parent class for full docstring)."""
@@ -275,26 +234,6 @@ class CombinedDataImporter(TrainingDataImporter):
             lambda merged, other: merged.merge(other),
             domains,
             Domain.empty(),
-        )
-
-    @rasa.shared.utils.common.cached_method
-    def get_stories(self, exclusion_percentage: Optional[int] = None) -> StoryGraph:
-        """Retrieves training stories / rules (see parent class for full docstring)."""
-        stories = [
-            importer.get_stories(exclusion_percentage) for importer in self._importers
-        ]
-
-        return reduce(
-            lambda merged, other: merged.merge(other), stories, StoryGraph([])
-        )
-
-    @rasa.shared.utils.common.cached_method
-    def get_conversation_tests(self) -> StoryGraph:
-        """Retrieves conversation test stories (see parent class for full docstring)."""
-        stories = [importer.get_conversation_tests() for importer in self._importers]
-
-        return reduce(
-            lambda merged, other: merged.merge(other), stories, StoryGraph([])
         )
 
     @rasa.shared.utils.common.cached_method
@@ -421,14 +360,6 @@ class ResponsesSyncImporter(TrainingDataImporter):
             }
         )
 
-    def get_stories(self, exclusion_percentage: Optional[int] = None) -> StoryGraph:
-        """Retrieves training stories / rules (see parent class for full docstring)."""
-        return self._importer.get_stories(exclusion_percentage)
-
-    def get_conversation_tests(self) -> StoryGraph:
-        """Retrieves conversation test stories (see parent class for full docstring)."""
-        return self._importer.get_conversation_tests()
-
     @rasa.shared.utils.common.cached_method
     def get_nlu_data(self, language: Optional[Text] = "en") -> TrainingData:
         """Updates NLU data with responses for retrieval intents from domain."""
@@ -455,137 +386,3 @@ class ResponsesSyncImporter(TrainingDataImporter):
 
         """
         return TrainingData(responses=responses)
-
-
-class E2EImporter(TrainingDataImporter):
-    """Importer with the following functionality.
-
-    - enhances the NLU training data with actions / user messages from the stories.
-    - adds potential end-to-end bot messages from stories as actions to the domain
-    """
-
-    def __init__(self, importer: TrainingDataImporter) -> None:
-        """Initializes the E2EImporter."""
-        self.importer = importer
-
-    @rasa.shared.utils.common.cached_method
-    def get_domain(self) -> Domain:
-        """Retrieves model domain (see parent class for full docstring)."""
-        original = self.importer.get_domain()
-        e2e_domain = self._get_domain_with_e2e_actions()
-
-        return original.merge(e2e_domain)
-
-    def _get_domain_with_e2e_actions(self) -> Domain:
-
-        stories = self.get_stories()
-
-        additional_e2e_action_names = set()
-        for story_step in stories.story_steps:
-            additional_e2e_action_names.update(
-                {
-                    event.action_text
-                    for event in story_step.events
-                    if isinstance(event, ActionExecuted) and event.action_text
-                }
-            )
-
-        return Domain.from_dict({KEY_E2E_ACTIONS: list(additional_e2e_action_names)})
-
-    def get_stories(self, exclusion_percentage: Optional[int] = None) -> StoryGraph:
-        """Retrieves the stories that should be used for training.
-
-        See parent class for details.
-        """
-        return self.importer.get_stories(exclusion_percentage)
-
-    def get_conversation_tests(self) -> StoryGraph:
-        """Retrieves conversation test stories (see parent class for full docstring)."""
-        return self.importer.get_conversation_tests()
-
-    def get_config(self) -> Dict:
-        """Retrieves model config (see parent class for full docstring)."""
-        return self.importer.get_config()
-
-    @rasa.shared.utils.common.cached_method
-    def get_config_file_for_auto_config(self) -> Optional[Text]:
-        """Returns config file path for auto-config only if there is a single one."""
-        return self.importer.get_config_file_for_auto_config()
-
-    @rasa.shared.utils.common.cached_method
-    def get_nlu_data(self, language: Optional[Text] = "en") -> TrainingData:
-        """Retrieves NLU training data (see parent class for full docstring)."""
-        training_datasets = [
-            _additional_training_data_from_default_actions(),
-            self.importer.get_nlu_data(language),
-            self._additional_training_data_from_stories(),
-        ]
-
-        return reduce(
-            lambda merged, other: merged.merge(other), training_datasets, TrainingData()
-        )
-
-    def _additional_training_data_from_stories(self) -> TrainingData:
-        stories = self.get_stories()
-
-        utterances, actions = _unique_events_from_stories(stories)
-
-        # Sort events to guarantee deterministic behavior and to avoid that the NLU
-        # model has to be retrained due to changes in the event order within
-        # the stories.
-        sorted_utterances = sorted(
-            utterances, key=lambda user: user.intent_name or user.text or ""
-        )
-        sorted_actions = sorted(
-            actions, key=lambda action: action.action_name or action.action_text or ""
-        )
-
-        additional_messages_from_stories = [
-            _messages_from_action(action) for action in sorted_actions
-        ] + [_messages_from_user_utterance(user) for user in sorted_utterances]
-
-        logger.debug(
-            f"Added {len(additional_messages_from_stories)} training data examples "
-            f"from the story training data."
-        )
-        return TrainingData(additional_messages_from_stories)
-
-
-def _unique_events_from_stories(
-    stories: StoryGraph,
-) -> Tuple[Set[UserUttered], Set[ActionExecuted]]:
-    action_events = set()
-    user_events = set()
-
-    for story_step in stories.story_steps:
-        for event in story_step.events:
-            if isinstance(event, ActionExecuted):
-                action_events.add(event)
-            elif isinstance(event, UserUttered):
-                user_events.add(event)
-
-    return user_events, action_events
-
-
-def _messages_from_user_utterance(event: UserUttered) -> Message:
-    # sub state correctly encodes intent vs text
-    data = cast(Dict[Text, Any], event.as_sub_state())
-    # sub state stores entities differently
-    if data.get(ENTITIES) and event.entities:
-        data[ENTITIES] = event.entities
-
-    return Message(data=data)
-
-
-def _messages_from_action(event: ActionExecuted) -> Message:
-    # sub state correctly encodes action_name vs action_text
-    return Message(data=event.as_sub_state())
-
-
-def _additional_training_data_from_default_actions() -> TrainingData:
-    additional_messages_from_default_actions = [
-        Message(data={ACTION_NAME: action_name})
-        for action_name in rasa.shared.core.constants.DEFAULT_ACTION_NAMES
-    ]
-
-    return TrainingData(additional_messages_from_default_actions)
