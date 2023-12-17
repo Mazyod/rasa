@@ -16,7 +16,6 @@ from rasa.nlu.featurizers.dense_featurizer.convert_featurizer import ConveRTFeat
 from rasa.nlu.featurizers.sparse_featurizer.count_vectors_featurizer import (
     CountVectorsFeaturizer,
 )
-from rasa.nlu.featurizers.dense_featurizer.lm_featurizer import LanguageModelFeaturizer
 from rasa.nlu.featurizers.sparse_featurizer.regex_featurizer import RegexFeaturizer
 from rasa.nlu.tokenizers.whitespace_tokenizer import WhitespaceTokenizer
 
@@ -36,7 +35,6 @@ DEFAULT_COMPONENTS = [
     LexicalSyntacticFeaturizer,
     ConveRTFeaturizer,
     CountVectorsFeaturizer,
-    LanguageModelFeaturizer,
     RegexFeaturizer,
     # Tokenizers
     WhitespaceTokenizer,
