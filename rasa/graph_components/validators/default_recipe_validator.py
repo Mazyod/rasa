@@ -6,7 +6,6 @@ from rasa.engine.graph import ExecutionContext, GraphComponent, GraphSchema, Sch
 from rasa.engine.storage.storage import ModelStorage
 from rasa.engine.storage.resource import Resource
 from rasa.nlu.featurizers.featurizer import Featurizer
-from rasa.nlu.extractors.mitie_entity_extractor import MitieEntityExtractor
 from rasa.nlu.extractors.regex_entity_extractor import RegexEntityExtractor
 from rasa.nlu.extractors.crf_entity_extractor import (
     CRFEntityExtractor,
@@ -26,7 +25,7 @@ import rasa.shared.utils.io
 
 
 # TODO: Can we replace this with the registered types from the regitry?
-TRAINABLE_EXTRACTORS = [MitieEntityExtractor, CRFEntityExtractor, DIETClassifier]
+TRAINABLE_EXTRACTORS = [CRFEntityExtractor, DIETClassifier]
 
 
 def _types_to_str(types: Iterable[Type]) -> Text:

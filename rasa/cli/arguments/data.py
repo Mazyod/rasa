@@ -1,5 +1,4 @@
 import argparse
-from typing import Text
 
 from rasa.cli.arguments.default_arguments import (
     add_nlu_data_param,
@@ -7,29 +6,6 @@ from rasa.cli.arguments.default_arguments import (
     add_data_param,
     add_domain_param,
 )
-from rasa.shared.constants import DEFAULT_CONVERTED_DATA_PATH
-
-
-def set_convert_arguments(parser: argparse.ArgumentParser, data_type: Text) -> None:
-    """Sets convert command arguments."""
-    parser.add_argument(
-        "-f",
-        "--format",
-        default="yaml",
-        choices=["json", "yaml"],
-        help="Output format the training data should be converted into.",
-    )
-
-    add_data_param(parser, required=True, data_type=data_type)
-
-    add_out_param(
-        parser,
-        default=DEFAULT_CONVERTED_DATA_PATH,
-        help_text="File (for `json`) or existing path (for `yaml`) "
-        "where to save training data in Rasa format.",
-    )
-
-    parser.add_argument("-l", "--language", default="en", help="Language of data.")
 
 
 def set_split_arguments(parser: argparse.ArgumentParser) -> None:

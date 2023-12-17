@@ -1,6 +1,5 @@
 import argparse
 import logging
-import pathlib
 from typing import List
 
 import rasa.shared.core.domain
@@ -44,30 +43,7 @@ def add_subparser(
 
     data_subparsers = data_parser.add_subparsers()
 
-    _add_data_convert_parsers(data_subparsers, parents)
     _add_data_split_parsers(data_subparsers, parents)
-
-
-def _add_data_convert_parsers(
-    data_subparsers: SubParsersAction, parents: List[argparse.ArgumentParser]
-) -> None:
-    convert_parser = data_subparsers.add_parser(
-        "convert",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        parents=parents,
-        help="Converts Rasa data between different formats.",
-    )
-    convert_parser.set_defaults(func=lambda _: convert_parser.print_help(None))
-
-    convert_subparsers = convert_parser.add_subparsers()
-    convert_nlu_parser = convert_subparsers.add_parser(
-        "nlu",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        parents=parents,
-        help="Converts NLU data between formats.",
-    )
-    convert_nlu_parser.set_defaults(func=_convert_nlu_data)
-    arguments.set_convert_arguments(convert_nlu_parser, data_type="Rasa NLU")
 
 
 def _add_data_split_parsers(
@@ -125,17 +101,3 @@ def split_nlu_data(args: argparse.Namespace) -> None:
 
     train.persist(args.out, filename=f"training_data{extension}")
     test.persist(args.out, filename=f"test_data{extension}")
-
-
-def _convert_nlu_data(args: argparse.Namespace) -> None:
-    import rasa.nlu.convert
-
-    if args.format in ["json", "yaml"]:
-        rasa.nlu.convert.convert_training_data(
-            args.data, args.out, args.format, args.language
-        )
-    else:
-        rasa.shared.utils.cli.print_error_and_exit(
-            "Could not recognize output format. Supported output formats: 'json' "
-            "and 'yaml'. Specify the desired output format with '--format'."
-        )

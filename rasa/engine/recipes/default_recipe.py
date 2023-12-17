@@ -415,15 +415,11 @@ class DefaultV1Recipe(Recipe):
         component: Type[GraphComponent],
         component_config: Dict[Text, Any],
     ) -> Dict[Text, Any]:
-        from rasa.nlu.classifiers.mitie_intent_classifier import MitieIntentClassifier
-        from rasa.nlu.extractors.mitie_entity_extractor import MitieEntityExtractor
         from rasa.nlu.classifiers.sklearn_intent_classifier import (
             SklearnIntentClassifier,
         )
 
         cli_args_mapping: Dict[Type[GraphComponent], List[Text]] = {
-            MitieIntentClassifier: ["num_threads"],
-            MitieEntityExtractor: ["num_threads"],
             SklearnIntentClassifier: ["num_threads"],
         }
 
