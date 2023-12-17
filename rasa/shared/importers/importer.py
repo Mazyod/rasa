@@ -8,10 +8,7 @@ import rasa.shared.utils.common
 import rasa.shared.core.constants
 import rasa.shared.utils.io
 from rasa.shared.core.domain import (
-    Domain,
-    KEY_INTENTS,
-    KEY_RESPONSES,
-    KEY_ACTIONS,
+    Domain
 )
 from rasa.shared.nlu.training_data.training_data import TrainingData
 from rasa.shared.core.domain import IS_RETRIEVAL_INTENT_KEY
@@ -282,107 +279,9 @@ class ResponsesSyncImporter(TrainingDataImporter):
     def get_domain(self) -> Domain:
         """Merge existing domain with properties of retrieval intents in NLU data."""
         existing_domain = self._importer.get_domain()
-        existing_nlu_data = self._importer.get_nlu_data()
-
-        # Merge responses from NLU data with responses in the domain.
-        # If NLU data has any retrieval intents, then add corresponding
-        # retrieval actions with `utter_` prefix automatically to the
-        # final domain, update the properties of existing retrieval intents.
-        domain_with_retrieval_intents = self._get_domain_with_retrieval_intents(
-            existing_nlu_data.retrieval_intents,
-            existing_nlu_data.responses,
-            existing_domain,
-        )
-
-        existing_domain = existing_domain.merge(
-            domain_with_retrieval_intents, override=True
-        )
-        existing_domain.check_missing_responses()
-
         return existing_domain
-
-    @staticmethod
-    def _construct_retrieval_action_names(retrieval_intents: Set[Text]) -> List[Text]:
-        """Lists names of all retrieval actions related to passed retrieval intents.
-
-        Args:
-            retrieval_intents: List of retrieval intents defined in the NLU training
-                data.
-
-        Returns: Names of corresponding retrieval actions
-        """
-        return [
-            f"{rasa.shared.constants.UTTER_PREFIX}{intent}"
-            for intent in retrieval_intents
-        ]
-
-    @staticmethod
-    def _get_domain_with_retrieval_intents(
-        retrieval_intents: Set[Text],
-        responses: Dict[Text, List[Dict[Text, Any]]],
-        existing_domain: Domain,
-    ) -> Domain:
-        """Construct a domain consisting of retrieval intents.
-
-         The result domain will have retrieval intents that are listed
-         in the NLU training data.
-
-        Args:
-            retrieval_intents: Set of retrieval intents defined in NLU training data.
-            responses: Responses defined in NLU training data.
-            existing_domain: Domain which is already loaded from the domain file.
-
-        Returns: Domain with retrieval actions added to action names and properties
-          for retrieval intents updated.
-        """
-        # Get all the properties already defined
-        # for each retrieval intent in other domains
-        # and add the retrieval intent property to them
-        retrieval_intent_properties = []
-        for intent in retrieval_intents:
-            intent_properties = (
-                existing_domain.intent_properties[intent]
-                if intent in existing_domain.intent_properties
-                else {}
-            )
-            intent_properties[IS_RETRIEVAL_INTENT_KEY] = True
-            retrieval_intent_properties.append({intent: intent_properties})
-
-        action_names = ResponsesSyncImporter._construct_retrieval_action_names(
-            retrieval_intents
-        )
-
-        return Domain.from_dict(
-            {
-                KEY_INTENTS: retrieval_intent_properties,
-                KEY_RESPONSES: responses,
-                KEY_ACTIONS: action_names,
-            }
-        )
 
     @rasa.shared.utils.common.cached_method
     def get_nlu_data(self, language: Optional[Text] = "en") -> TrainingData:
         """Updates NLU data with responses for retrieval intents from domain."""
-        existing_nlu_data = self._importer.get_nlu_data(language)
-        existing_domain = self._importer.get_domain()
-
-        return existing_nlu_data.merge(
-            self._get_nlu_data_with_responses(
-                existing_domain.retrieval_intent_responses
-            )
-        )
-
-    @staticmethod
-    def _get_nlu_data_with_responses(
-        responses: Dict[Text, List[Dict[Text, Any]]]
-    ) -> TrainingData:
-        """Construct training data object with only the responses supplied.
-
-        Args:
-            responses: Responses the NLU data should
-            be initialized with.
-
-        Returns: TrainingData object with responses.
-
-        """
-        return TrainingData(responses=responses)
+        return self._importer.get_nlu_data(language)

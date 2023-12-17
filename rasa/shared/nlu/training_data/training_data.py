@@ -120,7 +120,6 @@ class TrainingData:
             "entities": sorted(self.entities),
             "entity_groups": sorted(self.entity_groups),
             "entity_roles": sorted(self.entity_roles),
-            "actions": sorted(self.action_names),
         }
         return rasa.shared.utils.io.deep_container_fingerprint(labels)
 
@@ -235,20 +234,6 @@ class TrainingData:
     def intents(self) -> Set[Text]:
         """Returns the set of intents in the training data."""
         return {ex.get(INTENT) for ex in self.training_examples} - {None}
-
-    @lazy_property
-    def action_names(self) -> Set[Text]:
-        """Returns the set of action names in the training data."""
-        return {ex.get(ACTION_NAME) for ex in self.training_examples} - {None}
-
-    @lazy_property
-    def retrieval_intents(self) -> Set[Text]:
-        """Returns the total number of response types in the training data."""
-        return {
-            ex.get(INTENT)
-            for ex in self.training_examples
-            if ex.get(INTENT_RESPONSE_KEY)
-        }
 
     @lazy_property
     def number_of_examples_per_intent(self) -> Dict[Text, int]:
@@ -570,7 +555,6 @@ class TrainingData:
         smaller_split_frac = train_frac if train_frac < 0.5 else (1.0 - train_frac)
         num_classes = (
             len(self.number_of_examples_per_intent.items())
-            - len(self.retrieval_intents)
             + len(self.number_of_examples_per_response)
         )
         num_examples = sum(self.number_of_examples_per_intent.values())

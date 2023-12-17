@@ -39,7 +39,6 @@ REGULARIZATION_CONSTANT = "regularization_constant"
 NEGATIVE_MARGIN_SCALE = "negative_margin_scale"
 DROP_RATE = "drop_rate"
 DROP_RATE_ATTENTION = "drop_rate_attention"
-DROP_RATE_DIALOGUE = "drop_rate_dialogue"
 DROP_RATE_LABEL = "drop_rate_label"
 CONSTRAIN_SIMILARITIES = "constrain_similarities"
 

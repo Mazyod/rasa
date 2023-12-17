@@ -26,9 +26,6 @@ from rasa.exceptions import ModelNotFound
 from rasa.shared.core.constants import (
     USER_INTENT_RESTART,
 )
-from rasa.shared.core.events import (
-    UserUttered,
-)
 from rasa.shared.constants import (
     ASSISTANT_ID_KEY,
     DOCS_URL_DOMAINS,
@@ -38,8 +35,6 @@ from rasa.shared.constants import (
 )
 from rasa.core.lock_store import LockStore
 from rasa.utils.common import TempDirectoryPath, get_temp_dir_name
-import rasa.shared.core.trackers
-from rasa.shared.core.trackers import DialogueStateTracker, EventVerbosity
 from rasa.shared.nlu.constants import (
     ENTITIES,
     INTENT,
@@ -127,17 +122,6 @@ class MessageProcessor:
             )
             return None
 
-    @staticmethod
-    def _log_slots(tracker: DialogueStateTracker) -> None:
-        # Log currently set slots
-        slot_values = "\n".join(
-            [f"\t{s.name}: {s.value}" for s in tracker.slots.values()]
-        )
-        if slot_values.strip():
-            structlogger.debug(
-                "processor.slots.log", slot_values=copy.deepcopy(slot_values)
-            )
-
     def _check_for_unseen_features(self, parse_data: Dict[Text, Any]) -> None:
         """Warns the user if the NLU parse data contains unrecognized features.
 
@@ -175,7 +159,7 @@ class MessageProcessor:
     async def parse_message(
         self,
         message: UserMessage,
-        tracker: Optional[DialogueStateTracker] = None,
+        tracker = None,
         only_output_properties: bool = True,
     ) -> Dict[Text, Any]:
         """Interprets the passed message.
@@ -223,7 +207,7 @@ class MessageProcessor:
     def _parse_message_with_graph(
         self,
         message: UserMessage,
-        tracker: Optional[DialogueStateTracker] = None,
+        tracker = None,
         only_output_properties: bool = True,
     ) -> Dict[Text, Any]:
         """Interprets the passed message.
@@ -252,77 +236,3 @@ class MessageProcessor:
             parsed_message.as_dict(only_output_properties=only_output_properties)
         )
         return parse_data
-
-    async def _handle_message_with_tracker(
-        self, message: UserMessage, tracker: DialogueStateTracker
-    ) -> None:
-
-        if message.parse_data:
-            parse_data = message.parse_data
-        else:
-            parse_data = await self.parse_message(message, tracker)
-
-        # don't ever directly mutate the tracker
-        # - instead pass its events to log
-        tracker.update(
-            UserUttered(
-                message.text,
-                parse_data["intent"],
-                parse_data["entities"],
-                parse_data,
-                input_channel=message.input_channel,
-                message_id=message.message_id,
-                metadata=message.metadata,
-            ),
-            self.domain,
-        )
-
-        if parse_data["entities"]:
-            self._log_slots(tracker)
-
-        logger.debug(
-            f"Logged UserUtterance - tracker now has {len(tracker.events)} events."
-        )
-
-    @staticmethod
-    def _should_handle_message(tracker: DialogueStateTracker) -> bool:
-        return not tracker.is_paused() or (
-            tracker.latest_message is not None
-            and tracker.latest_message.intent.get(INTENT_NAME_KEY)
-            == USER_INTENT_RESTART
-        )
-
-    def _has_session_expired(self, tracker: DialogueStateTracker) -> bool:
-        """Determine whether the latest session in `tracker` has expired.
-
-        Args:
-            tracker: Tracker to inspect.
-
-        Returns:
-            `True` if the session in `tracker` has expired, `False` otherwise.
-        """
-        if not self.domain.session_config.are_sessions_enabled():
-            # tracker has never expired if sessions are disabled
-            return False
-
-        user_uttered_event: Optional[UserUttered] = tracker.get_last_event_for(
-            UserUttered
-        )
-
-        if not user_uttered_event:
-            # there is no user event so far so the session should not be considered
-            # expired
-            return False
-
-        time_delta_in_seconds = time.time() - user_uttered_event.timestamp
-        has_expired = (
-            time_delta_in_seconds / 60
-            > self.domain.session_config.session_expiration_time
-        )
-        if has_expired:
-            logger.debug(
-                f"The latest session for conversation ID '{tracker.sender_id}' has "
-                f"expired."
-            )
-
-        return has_expired

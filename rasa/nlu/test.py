@@ -35,14 +35,10 @@ import rasa.utils.io as io_utils
 from rasa.constants import TEST_DATA_FILE, TRAIN_DATA_FILE, NLG_DATA_FILE
 import rasa.nlu.classifiers.fallback_classifier
 from rasa.nlu.constants import (
-    RESPONSE_SELECTOR_DEFAULT_INTENT,
-    RESPONSE_SELECTOR_PROPERTY_NAME,
-    RESPONSE_SELECTOR_PREDICTION_KEY,
     TOKENS_NAMES,
     ENTITY_ATTRIBUTE_CONFIDENCE_TYPE,
     ENTITY_ATTRIBUTE_CONFIDENCE_ROLE,
     ENTITY_ATTRIBUTE_CONFIDENCE_GROUP,
-    RESPONSE_SELECTOR_RETRIEVAL_INTENTS,
 )
 from rasa.shared.nlu.constants import (
     TEXT,
@@ -77,9 +73,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 structlogger = structlog.get_logger()
 
-# Exclude 'EntitySynonymMapper' and 'ResponseSelector' as their super class
+# Exclude 'EntitySynonymMapper' as their super class
 # performs entity extraction but those two classifiers don't
-ENTITY_PROCESSORS = {"EntitySynonymMapper", "ResponseSelector"}
+ENTITY_PROCESSORS = {"EntitySynonymMapper"}
 
 EXTRACTORS_WITH_CONFIDENCES = {"CRFEntityExtractor", "DIETClassifier"}
 
@@ -1266,14 +1262,8 @@ async def get_eval_data(
 
     intent_results, entity_results, response_selection_results = [], [], []
 
-    response_labels = {
-        e.get(INTENT_RESPONSE_KEY)
-        for e in test_data.intent_examples
-        if e.get(INTENT_RESPONSE_KEY) is not None
-    }
     intent_labels = {e.get(INTENT) for e in test_data.intent_examples}
     should_eval_intents = len(intent_labels) >= 2
-    should_eval_response_selection = len(response_labels) >= 2
     should_eval_entities = len(test_data.entity_examples) > 0
 
     for example in tqdm(test_data.nlu_examples):
@@ -1296,37 +1286,6 @@ async def get_eval_data(
                     intent_prediction.get(INTENT_NAME_KEY),
                     result.get(TEXT),
                     intent_prediction.get("confidence"),
-                )
-            )
-
-        if should_eval_response_selection:
-            # including all examples here. Empty response examples are filtered at the
-            # time of metric calculation
-            intent_target = example.get(INTENT, "")
-            selector_properties = result.get(RESPONSE_SELECTOR_PROPERTY_NAME, {})
-            response_selector_retrieval_intents = selector_properties.get(
-                RESPONSE_SELECTOR_RETRIEVAL_INTENTS, set()
-            )
-            if (
-                intent_target in response_selector_retrieval_intents
-                and intent_target in selector_properties
-            ):
-                response_prediction_key = intent_target
-            else:
-                response_prediction_key = RESPONSE_SELECTOR_DEFAULT_INTENT
-
-            response_prediction = selector_properties.get(
-                response_prediction_key, {}
-            ).get(RESPONSE_SELECTOR_PREDICTION_KEY, {})
-
-            intent_response_key_target = example.get(INTENT_RESPONSE_KEY, "")
-
-            response_selection_results.append(
-                ResponseSelectionEvaluationResult(
-                    intent_response_key_target,
-                    response_prediction.get(INTENT_RESPONSE_KEY),
-                    result.get(TEXT),
-                    response_prediction.get(PREDICTED_CONFIDENCE_KEY),
                 )
             )
 

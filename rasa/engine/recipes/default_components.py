@@ -18,7 +18,6 @@ from rasa.nlu.featurizers.sparse_featurizer.count_vectors_featurizer import (
 )
 from rasa.nlu.featurizers.dense_featurizer.lm_featurizer import LanguageModelFeaturizer
 from rasa.nlu.featurizers.sparse_featurizer.regex_featurizer import RegexFeaturizer
-from rasa.nlu.selectors.response_selector import ResponseSelector
 from rasa.nlu.tokenizers.whitespace_tokenizer import WhitespaceTokenizer
 
 DEFAULT_COMPONENTS = [
@@ -28,8 +27,6 @@ DEFAULT_COMPONENTS = [
     KeywordIntentClassifier,
     SklearnIntentClassifier,
     LogisticRegressionClassifier,
-    # Response Selectors
-    ResponseSelector,
     # Message Entity Extractors
     CRFEntityExtractor,
     DucklingEntityExtractor,

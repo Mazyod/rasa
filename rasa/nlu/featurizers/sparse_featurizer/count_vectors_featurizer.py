@@ -308,7 +308,7 @@ class CountVectorsFeaturizer(SparseFeaturizer, GraphComponent):
                     return
 
         if any(text for tokens in all_tokens for text in tokens):
-            training_data_type = "NLU" if attribute == TEXT else "ResponseSelector"
+            training_data_type = "NLU"
 
             # if there is some text in tokens, warn if there is no oov token
             rasa.shared.utils.io.raise_warning(

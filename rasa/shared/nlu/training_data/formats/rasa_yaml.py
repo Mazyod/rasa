@@ -28,7 +28,6 @@ from rasa.shared.nlu.training_data.message import Message
 logger = logging.getLogger(__name__)
 
 KEY_NLU = "nlu"
-KEY_RESPONSES = "responses"
 KEY_INTENT = "intent"
 KEY_INTENT_EXAMPLES = "examples"
 KEY_INTENT_TEXT = "text"
@@ -93,8 +92,6 @@ class RasaYAMLReader(TrainingDataReader):
         for key, value in yaml_content.items():
             if key == KEY_NLU:
                 self._parse_nlu(value)
-            elif key == KEY_RESPONSES:
-                self.responses = value
 
         return TrainingData(
             self.training_examples,
@@ -354,7 +351,7 @@ class RasaYAMLReader(TrainingDataReader):
         if not rasa.shared.data.is_likely_yaml_file(filename):
             return False
 
-        return rasa.shared.utils.io.is_key_in_yaml(filename, KEY_NLU, KEY_RESPONSES)
+        return True
 
 
 class RasaYAMLWriter(TrainingDataWriter):
@@ -412,11 +409,6 @@ class RasaYAMLWriter(TrainingDataWriter):
 
         if nlu_items:
             result[KEY_NLU] = nlu_items
-
-        if training_data.responses:
-            result[KEY_RESPONSES] = Domain.get_responses_with_multilines(
-                training_data.responses
-            )
 
         return result
 

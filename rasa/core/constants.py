@@ -49,8 +49,6 @@ MEMOIZATION_POLICY_PRIORITY = UNLIKELY_INTENT_POLICY_PRIORITY + 1
 # rule execution takes precedence over training stories or predicted actions.
 RULE_POLICY_PRIORITY = MEMOIZATION_POLICY_PRIORITY + 1
 
-DIALOGUE = "dialogue"
-
 # RabbitMQ message property header added to events published using `rasa export`
 RASA_EXPORT_PROCESS_ID_HEADER_NAME = "rasa-export-process-id"
 

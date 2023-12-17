@@ -127,9 +127,6 @@ mapping:
   config:
     type: "map"
     allowempty: True
-    mapping:
-      store_entities_as_slots:
-        type: "bool"
   session_config:
     type: "map"
     allowempty: True

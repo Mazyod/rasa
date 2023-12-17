@@ -15,7 +15,6 @@ from rasa.nlu.extractors.crf_entity_extractor import (
 from rasa.nlu.extractors.entity_synonyms import EntitySynonymMapper
 from rasa.nlu.featurizers.sparse_featurizer.regex_featurizer import RegexFeaturizer
 from rasa.nlu.classifiers.diet_classifier import DIETClassifier
-from rasa.nlu.selectors.response_selector import ResponseSelector
 from rasa.nlu.tokenizers.tokenizer import Tokenizer
 from rasa.shared.constants import (
     DOCS_URL_COMPONENTS,
@@ -96,26 +95,9 @@ class DefaultV1RecipeValidator(GraphComponent):
     ) -> None:
         """Validates that all training data will be consumed by some component.
 
-        For example, if you specify response examples in your training data, but there
-        is no `ResponseSelector` component in your configuration, then this method
-        issues a warning.
-
         Args:
             training_data: The training data for the NLU components.
         """
-        if (
-            training_data.response_examples
-            and ResponseSelector not in self._component_types
-        ):
-            rasa.shared.utils.io.raise_warning(
-                f"You have defined training data with examples for training a response "
-                f"selector, but your NLU configuration does not include a response "
-                f"selector component. "
-                f"To train a model on your response selector data, add a "
-                f"'{ResponseSelector.__name__}' to your configuration.",
-                docs=DOCS_URL_COMPONENTS,
-            )
-
         if training_data.entity_examples and self._component_types.isdisjoint(
             TRAINABLE_EXTRACTORS
         ):

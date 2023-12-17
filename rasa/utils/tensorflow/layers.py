@@ -16,7 +16,6 @@ from rasa.utils.tensorflow.constants import (
     LABEL,
     LABEL_PAD_ID,
 )
-from rasa.core.constants import DIALOGUE
 from rasa.shared.nlu.constants import FEATURE_TYPE_SENTENCE, FEATURE_TYPE_SEQUENCE
 from rasa.shared.nlu.constants import TEXT, INTENT, ACTION_NAME, ACTION_TEXT
 
@@ -32,7 +31,6 @@ POSSIBLE_ATTRIBUTES = [
     TEXT,
     INTENT,
     LABEL,
-    DIALOGUE,
     ACTION_NAME,
     ACTION_TEXT,
     f"{LABEL}_{ACTION_NAME}",

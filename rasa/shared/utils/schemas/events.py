@@ -64,23 +64,6 @@ USER_UTTERED = {
                 "intent_ranking": {"type": "array", "items": INTENT},
                 "intent": INTENT,
                 "entities": ENTITIES_SCHEMA,
-                "response_selector": {
-                    "type": "object",
-                    "oneOf": [
-                        {"properties": {"all_retrieval_intents": {"type": "array"}}},
-                        {
-                            "patternProperties": {
-                                "[\\w/]": {
-                                    "type": "object",
-                                    "properties": {
-                                        "response": RESPONSE_SCHEMA,
-                                        "ranking": RANKING_SCHEMA,
-                                    },
-                                }
-                            }
-                        },
-                    ],
-                },
             },
         },
     }

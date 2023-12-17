@@ -35,7 +35,6 @@ ACTION_BACK_NAME = "action_back"
 ACTION_TWO_STAGE_FALLBACK_NAME = "action_two_stage_fallback"
 ACTION_UNLIKELY_INTENT_NAME = "action_unlikely_intent"
 RULE_SNIPPET_ACTION_NAME = "..."
-ACTION_VALIDATE_SLOT_MAPPINGS = "action_validate_slot_mappings"
 
 DEFAULT_ACTION_NAMES = [
     ACTION_LISTEN_NAME,
@@ -121,7 +120,6 @@ class SlotMappingType(Enum):
 # the keys for `State` (USER, PREVIOUS_ACTION, SLOTS, ACTIVE_LOOP)
 # represent the origin of a `SubState`
 USER = "user"
-SLOTS = "slots"
 
 USE_TEXT_FOR_FEATURIZATION = "use_text_for_featurization"
 ENTITY_LABEL_SEPARATOR = "#"
