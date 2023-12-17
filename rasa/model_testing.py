@@ -19,7 +19,7 @@ import rasa.shared.utils.cli
 import rasa.shared.utils.common
 import rasa.shared.utils.io
 import rasa.utils.common
-from rasa.constants import RESULTS_FILE, NUMBER_OF_TRAINING_STORIES_FILE
+from rasa.constants import RESULTS_FILE
 from rasa.exceptions import ModelNotFound
 from rasa.shared.constants import DEFAULT_RESULTS_PATH
 import rasa.shared.nlu.training_data.loading
