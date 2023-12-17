@@ -1,5 +1,5 @@
 from __future__ import annotations
-from asyncio import AbstractEventLoop, CancelledError
+from asyncio import AbstractEventLoop
 import functools
 import logging
 import os
@@ -7,26 +7,17 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Text, Union
 import uuid
 
-import aiohttp
-from aiohttp import ClientError
-
-from rasa.core import jobs
 from rasa.core.channels.channel import OutputChannel, UserMessage
-from rasa.core.constants import DEFAULT_REQUEST_TIMEOUT
-from rasa.shared.core.domain import Domain
 from rasa.core.exceptions import AgentNotReady
 from rasa.shared.constants import DEFAULT_SENDER_ID
 from rasa.core.lock_store import InMemoryLockStore, LockStore
 from rasa.core.processor import MessageProcessor
-from rasa.shared.core.trackers import DialogueStateTracker, EventVerbosity
 from rasa.exceptions import ModelNotFound
-from rasa.nlu.utils import is_url
 from rasa.shared.exceptions import RasaException
 import rasa.shared.utils.io
 from rasa.utils.common import TempDirectoryPath, get_temp_dir_name
 
 logger = logging.getLogger(__name__)
-
 
 
 def _load_and_set_updated_model(
@@ -60,19 +51,8 @@ async def load_agent(
     Returns:
         The instantiated `Agent` or `None`.
     """
-    tracker_store = None
-    lock_store = None
-    generator = None
-    action_endpoint = None
-    http_interpreter = None
-
     agent = Agent(
-        generator=generator,
-        tracker_store=tracker_store,
-        lock_store=lock_store,
-        action_endpoint=action_endpoint,
-        remote_storage=remote_storage,
-        http_interpreter=http_interpreter,
+        remote_storage=remote_storage
     )
 
     try:
@@ -122,7 +102,7 @@ class Agent:
 
     def __init__(
         self,
-        domain: Optional[Domain] = None,
+        domain = None,
         lock_store: Optional[LockStore] = None,
         fingerprint: Optional[Text] = None,
         remote_storage: Optional[Text] = None,
@@ -140,7 +120,7 @@ class Agent:
     def load(
         cls,
         model_path: Union[Text, Path],
-        domain: Optional[Domain] = None,
+        domain= None,
         lock_store: Optional[LockStore] = None,
         fingerprint: Optional[Text] = None,
         remote_storage: Optional[Text] = None,
@@ -167,9 +147,6 @@ class Agent:
 
         self._set_fingerprint(fingerprint)
 
-        # update domain on all instances
-        self.tracker_store.domain = self.domain
-
     @property
     def model_id(self) -> Optional[Text]:
         """Returns the model_id from processor's model_metadata."""
@@ -182,7 +159,7 @@ class Agent:
 
     def is_ready(self) -> bool:
         """Check if all necessary components are instantiated to use agent."""
-        return self.tracker_store is not None and self.processor is not None
+        return self.processor is not None
 
     @agent_must_be_ready
     async def parse_message(self, message_data: Text) -> Dict[Text, Any]:
@@ -241,14 +218,6 @@ class Agent:
         the output channel is not set, set to ``None``, or set
         to ``CollectingOutputChannel`` this function will return the messages
         the bot wants to respond.
-
-        :Example:
-
-            >>> from rasa.core.agent import Agent
-            >>> agent = Agent.load("examples/moodbot/models")
-            >>> await agent.handle_text("hello")
-            [u'how can I help you?']
-
         """
         if isinstance(text_message, str):
             text_message = {"text": text_message}

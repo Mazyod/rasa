@@ -7,7 +7,6 @@ from rasa.cli import SubParsersAction
 from rasa.cli.arguments import run as arguments
 from rasa.shared.constants import (
     DOCS_BASE_URL,
-    DEFAULT_CREDENTIALS_PATH,
     DEFAULT_MODELS_PATH,
 )
 from rasa.exceptions import ModelNotFound
@@ -60,10 +59,6 @@ def run(args: argparse.Namespace) -> None:
     """
     import rasa
 
-    args.credentials = rasa.cli.utils.get_validated_path(
-        args.credentials, "credentials", DEFAULT_CREDENTIALS_PATH, True
-    )
-
     if args.enable_api:
         if not args.remote_storage:
             args.model = _validate_model_path(args.model, "model", DEFAULT_MODELS_PATH)
@@ -75,7 +70,6 @@ def run(args: argparse.Namespace) -> None:
     # configured
 
     import rasa.model
-    from rasa.core.utils import AvailableEndpoints
 
     # start server if remote storage is configured
     if args.remote_storage is not None:

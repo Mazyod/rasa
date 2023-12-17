@@ -82,7 +82,6 @@ REQUIRED_SLOTS_KEY = "required_slots"
 IGNORED_INTENTS = "ignored_intents"
 
 # Constants for default Rasa Open Source project layout
-DEFAULT_CREDENTIALS_PATH = "credentials.yml"
 DEFAULT_CONFIG_PATH = "config.yml"
 DEFAULT_DOMAIN_PATH = "domain.yml"
 DEFAULT_ACTIONS_PATH = "actions"
