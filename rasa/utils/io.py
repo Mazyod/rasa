@@ -9,7 +9,7 @@ import re
 from asyncio import AbstractEventLoop
 from pathlib import Path
 from typing import Text, Any, Union, List, Type, Callable, TYPE_CHECKING, Pattern
-from typing_extensions import Protocol
+from typing import Protocol
 
 import rasa.shared.constants
 import rasa.shared.utils.io

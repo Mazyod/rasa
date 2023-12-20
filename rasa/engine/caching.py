@@ -12,7 +12,7 @@ from packaging import version
 from sqlalchemy.engine import URL
 
 from sqlalchemy.exc import OperationalError
-from typing_extensions import Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 import rasa
 import rasa.model

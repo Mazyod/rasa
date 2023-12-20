@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from questionary import Question
-    from typing_extensions import Literal
+    from typing import Literal
 
 logger = logging.getLogger(__name__)
 

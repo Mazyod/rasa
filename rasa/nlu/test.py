@@ -60,7 +60,7 @@ from rasa.shared.importers.importer import TrainingDataImporter
 from rasa.shared.nlu.training_data.formats.rasa_yaml import RasaYAMLWriter
 
 if TYPE_CHECKING:
-    from typing_extensions import TypedDict
+    from typing import TypedDict
 
     EntityPrediction = TypedDict(
         "EntityPrediction",

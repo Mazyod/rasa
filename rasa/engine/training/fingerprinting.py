@@ -1,7 +1,7 @@
 import inspect
 import logging
 from typing import Any, Dict, Text, Type
-from typing_extensions import Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 import pkg_resources
 import rasa.utils.common
 import rasa.shared.utils.io
