@@ -251,7 +251,7 @@ class RasaModel(Model):
             element_spec.append(tf.TensorSpec(shape, tensor.dtype))
         # batch_in is a list of tensors, therefore we need to wrap element_spec into
         # the list
-        return [element_spec]
+        return [tuple(element_spec)]
 
     def _rasa_predict(
         self, batch_in: Tuple[np.ndarray, ...]
