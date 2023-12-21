@@ -7,7 +7,7 @@ import os
 from collections import defaultdict
 from typing import List, Text, Dict, Tuple, Union, Optional, Any, TYPE_CHECKING
 
-from keras.utils import tf_utils
+from keras.src.utils import tf_utils
 from keras import Model
 
 from rasa.shared.constants import DIAGNOSTIC_DATA
@@ -251,7 +251,7 @@ class RasaModel(Model):
             element_spec.append(tf.TensorSpec(shape, tensor.dtype))
         # batch_in is a list of tensors, therefore we need to wrap element_spec into
         # the list
-        return [element_spec]
+        return [tuple(element_spec)]
 
     def _rasa_predict(
         self, batch_in: Tuple[np.ndarray, ...]
