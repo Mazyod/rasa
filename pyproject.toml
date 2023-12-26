@@ -21,6 +21,11 @@ license = "Apache-2.0"
 name = "PyPI"
 priority = "primary"
 
+[[tool.poetry.source]]
+name = "nvidia"
+url = "https://pypi.nvidia.com"
+priority = "supplemental"
+
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 requests = "^2.23"
@@ -65,6 +70,7 @@ rasa = "rasa.__main__:main"
 [tool.poetry.dependencies.tensorflow]
 version = "2.15.0"
 markers = "sys_platform != 'darwin' or platform_machine != 'arm64'"
+extras = ["and-cuda"]
 
 [tool.poetry.dependencies.tensorflow-intel]
 version = "2.15.0"
