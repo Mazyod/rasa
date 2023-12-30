@@ -68,16 +68,6 @@ class MessageProcessor:
             model_path
         )
 
-        if self.model_metadata.assistant_id is None:
-            rasa.shared.utils.io.raise_warning(
-                f"The model metadata does not contain a value for the "
-                f"'{ASSISTANT_ID_KEY}' attribute. Check that 'config.yml' "
-                f"file contains a value for the '{ASSISTANT_ID_KEY}' key "
-                f"and re-train the model. Failure to do so will result in "
-                f"streaming events without a unique assistant identifier.",
-                UserWarning,
-            )
-
         self.model_path = Path(model_path)
         self.domain = self.model_metadata.domain
 
