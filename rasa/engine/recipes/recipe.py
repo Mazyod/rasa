@@ -32,11 +32,6 @@ class Recipe(abc.ABC):
         from rasa.engine.recipes.graph_recipe import GraphV1Recipe
 
         if name is None:
-            rasa.shared.utils.io.raise_deprecation_warning(
-                "From Rasa Open Source 4.0.0 onwards it will be required to specify "
-                "a recipe in your model configuration. Defaulting to recipe "
-                f"'{DefaultV1Recipe.name}'."
-            )
             return DefaultV1Recipe()
         recipes = {
             DefaultV1Recipe.name: DefaultV1Recipe,
