@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from typing import Text
 
@@ -22,6 +21,6 @@ def run_cmdline(model_path: Text) -> None:
             print_info("Wrapping up command line chat...")
             break
 
-        result = asyncio.run(agent.parse_message(message))
+        result = agent.parse_message(message)
 
         print(json_to_string(result))

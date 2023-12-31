@@ -146,7 +146,7 @@ class MessageProcessor:
                     docs=DOCS_URL_DOMAINS,
                 )
 
-    async def parse_message(
+    def parse_message(
         self,
         message: UserMessage,
         tracker = None,

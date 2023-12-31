@@ -36,10 +36,9 @@ def _load_and_set_updated_model(
     logger.debug("Finished updating agent to new model.")
 
 
-async def load_agent(
+def load_agent(
     model_path: Optional[Text] = None,
     remote_storage: Optional[Text] = None,
-    loop: Optional[AbstractEventLoop] = None,
 ) -> Agent:
     """Loads agent from server, remote storage or disk.
 
@@ -162,7 +161,7 @@ class Agent:
         return self.processor is not None
 
     @agent_must_be_ready
-    async def parse_message(self, message_data: Text) -> Dict[Text, Any]:
+    def parse_message(self, message_data: Text) -> Dict[Text, Any]:
         """Handles message text and intent payload input messages.
 
         The return value of this function is parsed_data.
@@ -186,7 +185,7 @@ class Agent:
         """
         message = UserMessage(message_data)
 
-        return await self.processor.parse_message(message)  # type: ignore[union-attr]
+        return self.processor.parse_message(message)  # type: ignore[union-attr]
 
     async def handle_message(
         self, message: UserMessage

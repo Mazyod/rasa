@@ -1267,7 +1267,7 @@ async def get_eval_data(
     should_eval_entities = len(test_data.entity_examples) > 0
 
     for example in tqdm(test_data.nlu_examples):
-        result = await processor.parse_message(
+        result = processor.parse_message(
             UserMessage(text=example.get(TEXT)),
             tracker=None,
             only_output_properties=False,
